@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>FocusGate — social cards</title>
+<style>
+:root{
+  --bg:#08080C; --bg-2:#0B0B11; --surface:#101017; --surface-2:#16161F; --surface-3:#1E1E29;
+  --border:rgba(255,255,255,.09); --border-strong:rgba(255,255,255,.15);
+  --hairline:inset 0 1px 0 rgba(255,255,255,.06);
+  --text:#F2F2F6; --text-2:#A5A5B8; --muted:#6C6C80; --faint:#4A4A5C;
+  --accent:#6E5BFF; --accent-2:#22D3EE; --accent-text:#ADA0FF;
+  --accent-soft:rgba(110,91,255,.15); --accent-line:rgba(110,91,255,.36);
+  --grad:linear-gradient(135deg,#6E5BFF 0%,#7D6BFF 42%,#22D3EE 140%);
+  --grad-text:linear-gradient(100deg,#FFFFFF 6%,#C9C0FF 48%,#7FE6F5 96%);
+  --danger:#FF5A60; --danger-line:rgba(255,90,96,.34); --danger-soft:rgba(255,90,96,.14);
+  --success:#2DD4A7; --success-soft:rgba(45,212,167,.14);
+  --sans:"Be Vietnam Pro","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"DejaVu Sans",sans-serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,"DejaVu Sans Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#000}
+.card{
+  position:relative; overflow:hidden; background:var(--bg); color:var(--text);
+  font-family:var(--sans); letter-spacing:-.02em; display:none;
+}
+body[data-card="og"] .card.og,
+body[data-card="square"] .card.square,
+body[data-card="story"] .card.story,
+body[data-card="cover"] .card.cover,
+body[data-card="c1"] .card.c1,
+body[data-card="c2"] .card.c2,
+body[data-card="c3"] .card.c3,
+body[data-card="m1"] .card.m1,
+body[data-card="m2"] .card.m2,
+body[data-card="m3"] .card.m3{display:block}
+
+.aurora{position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(34% 40% at 8% 4%, rgba(110,91,255,.52) 0%, transparent 72%),
+    radial-gradient(30% 34% at 96% 10%, rgba(34,211,238,.28) 0%, transparent 70%),
+    radial-gradient(70% 30% at 50% -4%, rgba(110,91,255,.16) 0%, transparent 76%);
+  filter:blur(46px)}
+.grain{position:absolute; inset:0; pointer-events:none; opacity:.34; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E")}
+.inner{position:relative; z-index:2; height:100%; display:flex}
+
+.brand{display:flex; align-items:center; gap:14px}
+.mark{border-radius:22%; display:grid; place-items:center; background:var(--grad); color:#fff; flex:none;
+  box-shadow:0 0 0 1px rgba(255,255,255,.16) inset, 0 10px 34px -10px rgba(110,91,255,.95)}
+.mark svg{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.wordmark{font-weight:800; letter-spacing:-.045em}
+.eyebrow{font-family:var(--sans); text-transform:uppercase; color:var(--muted); font-weight:600}
+.gtext{background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.chip{display:inline-flex; align-items:center; gap:10px; border-radius:999px;
+  background:var(--surface-2); border:1px solid var(--border-strong); box-shadow:var(--hairline); color:var(--text-2)}
+.chip .dot{border-radius:50%; background:var(--success); flex:none}
+.shot{border-radius:20px; border:1px solid var(--border-strong); overflow:hidden; display:block;
+  box-shadow:0 60px 120px -40px rgba(0,0,0,.95), 0 0 0 1px rgba(110,91,255,.14)}
+
+
+/* ---------- Ảnh sản phẩm đóng khung ---------- */
+.card.m1,.card.m2,.card.m3{width:1600px; height:1000px}
+.m1 .inner,.m2 .inner,.m3 .inner{align-items:center; justify-content:center; padding:64px}
+.win{width:100%; max-width:1400px; height:100%; display:flex; flex-direction:column;
+  border-radius:20px; overflow:hidden;
+  background:var(--bg-2); border:1px solid var(--border-strong);
+  box-shadow:0 70px 140px -50px rgba(0,0,0,.95), 0 0 0 1px rgba(110,91,255,.14), var(--hairline)}
+.shotbox{flex:1; min-height:0; overflow:hidden}
+.shotbox img{width:100%; height:100%; object-fit:cover; object-position:top center}
+.win-bar{display:flex; align-items:center; gap:14px; padding:14px 18px;
+  background:var(--surface); border-bottom:1px solid var(--border)}
+.tl{display:flex; gap:8px}
+.tl i{width:12px;height:12px;border-radius:50%;display:block;background:var(--surface-3)}
+.tl.mac i:nth-child(1){background:#FF5F57} .tl.mac i:nth-child(2){background:#FEBC2E} .tl.mac i:nth-child(3){background:#28C840}
+.omni{flex:1; display:flex; align-items:center; gap:9px; min-width:0; font-family:var(--mono);
+  font-size:13px; color:var(--text-2); padding:7px 15px; border-radius:999px;
+  background:var(--bg-2); border:1px solid var(--border)}
+.omni .li{flex:none; color:var(--danger); display:flex}
+.win-title{flex:1; text-align:center; font-size:14px; font-weight:600; color:var(--text-2); letter-spacing:-.02em}
+.win img{display:block}
+
+/* ---------- 1200x630 — ảnh xem trước khi chia sẻ link ---------- */
+.card.og{width:1200px; height:630px}
+.og .inner{align-items:center; padding:0 0 0 68px; gap:40px}
+.og .left{width:560px; flex:none}
+.og .mark{width:52px;height:52px} .og .mark svg{width:26px;height:26px;stroke-width:2.1}
+.og .wordmark{font-size:27px}
+.og .eyebrow{font-size:12.5px; letter-spacing:.17em; margin:34px 0 16px}
+.og h1{font-size:58px; line-height:1.17; font-weight:800; letter-spacing:-.05em}
+.og p{font-size:19px; color:var(--text-2); line-height:1.5; margin-top:20px; letter-spacing:-.012em}
+.og .chips{display:flex; gap:9px; margin-top:28px; flex-wrap:wrap}
+.og .chip{padding:7px 15px; font-size:13.5px} .og .chip .dot{width:7px;height:7px}
+.og .right{flex:1; position:relative; height:100%}
+.og .shot{position:absolute; top:76px; left:20px; width:640px; transform:rotate(-2.2deg)}
+
+/* ---------- 1080x1080 — bài đăng vuông ---------- */
+.card.square{width:1080px; height:1080px}
+.square .inner{flex-direction:column; padding:78px 76px; justify-content:space-between}
+.square .mid{flex:1; display:flex; flex-direction:column; justify-content:center; padding-block:30px}
+.square .mark{width:60px;height:60px} .square .mark svg{width:30px;height:30px;stroke-width:2.1}
+.square .wordmark{font-size:31px}
+.square .glyph{width:112px; height:112px; border-radius:32px; display:grid; place-items:center;
+  background:var(--surface-2); border:1px solid var(--danger-line); color:var(--danger);
+  box-shadow:0 0 90px -18px var(--danger), var(--hairline); margin-bottom:44px}
+.square .glyph svg{width:50px;height:50px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.square h1{font-size:78px; line-height:1.14; font-weight:800; letter-spacing:-.055em}
+.square p{font-size:25px; color:var(--text-2); line-height:1.55; margin-top:28px; max-width:26ch}
+.square .foot{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.square .chip{padding:10px 20px; font-size:17px} .square .chip .dot{width:9px;height:9px}
+
+/* ---------- 1080x1920 — story ---------- */
+.card.story{width:1080px; height:1920px}
+.story .inner{flex-direction:column; padding:120px 76px 110px; justify-content:space-between; text-align:center; align-items:center; gap:40px}
+.story .mark{width:64px;height:64px} .story .mark svg{width:32px;height:32px;stroke-width:2.1}
+.story .wordmark{font-size:33px}
+.story h1{font-size:82px; line-height:1.14; font-weight:800; letter-spacing:-.05em; margin-top:46px}
+.story p{font-size:27px; color:var(--text-2); line-height:1.5; margin-top:30px; max-width:22ch}
+.story .shot{width:860px; margin:0 auto}
+.story .cta{display:inline-flex; align-items:center; gap:14px; padding:22px 44px; border-radius:999px;
+  background:var(--grad); color:#fff; font-size:27px; font-weight:700; letter-spacing:-.025em;
+  box-shadow:0 1px 0 rgba(255,255,255,.3) inset, 0 18px 50px -14px rgba(110,91,255,.95)}
+
+/* ---------- 1500x500 — ảnh bìa ---------- */
+.card.cover{width:1500px; height:500px}
+.cover .inner{align-items:center; padding:0 80px; gap:34px}
+.cover .mark{width:78px;height:78px} .cover .mark svg{width:38px;height:38px;stroke-width:2}
+.cover .wordmark{font-size:58px; line-height:1.15; letter-spacing:-.05em}
+.cover .tag{font-size:23px; color:var(--text-2); margin-top:8px; letter-spacing:-.015em}
+.cover .chips{margin-left:auto; display:flex; gap:11px; flex-direction:column; align-items:flex-end}
+.cover .chip{padding:10px 20px; font-size:16px} .cover .chip .dot{width:8px;height:8px}
+
+/* ---------- Carousel 1080x1080 ---------- */
+.card.c1,.card.c2,.card.c3{width:1080px; height:1080px}
+.c1 .inner,.c2 .inner,.c3 .inner{flex-direction:column; padding:86px 80px; justify-content:space-between; gap:40px}
+.slide-n{font-family:var(--sans); font-size:18px; color:var(--accent-text); letter-spacing:.15em; font-weight:700; text-transform:uppercase}
+.c1 h1,.c2 h1,.c3 h1{font-size:64px; line-height:1.18; font-weight:800; letter-spacing:-.05em; margin-top:26px}
+.c1 p,.c2 p,.c3 p{font-size:26px; color:var(--text-2); line-height:1.5; margin-top:30px; max-width:21ch}
+.c2 .rows{display:flex; flex-direction:column; gap:14px}
+.c2 .row{display:flex; align-items:center; gap:18px; padding:22px 26px; border-radius:18px;
+  background:var(--surface); border:1px solid var(--border); box-shadow:var(--hairline); font-size:23px; position:relative}
+.c2 .row::before{content:''; position:absolute; left:0; top:18px; bottom:18px; width:4px; border-radius:0 4px 4px 0;
+  background:linear-gradient(180deg,var(--danger),rgba(255,90,96,.3)); box-shadow:0 0 16px -2px var(--danger)}
+.c2 .row .box{width:30px;height:30px;border-radius:9px;border:2px solid rgba(255,255,255,.24);flex:none}
+.c3 .stats{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+.c3 .stat{padding:34px 30px; border-radius:22px; background:var(--surface); border:1px solid var(--border); box-shadow:var(--hairline)}
+.c3 .stat .n{font-family:var(--mono); font-size:56px; font-weight:700; letter-spacing:-.06em; line-height:1}
+.c3 .stat .l{font-size:19px; color:var(--muted); margin-top:12px}
+.brandfoot{display:flex; align-items:center; gap:13px}
+.brandfoot .mark{width:44px;height:44px} .brandfoot .mark svg{width:22px;height:22px;stroke-width:2.1}
+.brandfoot .wordmark{font-size:25px}
+.brandfoot .url{margin-left:auto; font-family:var(--mono); font-size:17px; color:var(--muted)}
+</style>
+</head>
+<body data-card="og">
+
+<!-- 1200x630 -->
+<div class="card og"><div class="aurora"></div><div class="grain"></div><div class="inner">
+  <div class="left">
+    <div class="brand">
+      <span class="mark"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+      <span class="wordmark">FocusGate</span>
+    </div>
+    <div class="eyebrow">Extension Chrome + app macOS</div>
+    <h1>Xong việc rồi<br><span class="gtext">hẵng lướt.</span></h1>
+    <p>Khoá mọi trang gây mất tập trung cho tới khi bạn tick xong việc.</p>
+    <div class="chips">
+      <span class="chip"><span class="dot"></span>Miễn phí</span>
+      <span class="chip"><span class="dot"></span>Không tài khoản</span>
+      <span class="chip"><span class="dot"></span>Dữ liệu ở máy bạn</span>
+    </div>
+  </div>
+  <div class="right"><img class="shot" src="shots/blocked.webp" alt=""></div>
+</div></div>
+
+<!-- 1080x1080 -->
+<div class="card square"><div class="aurora"></div><div class="grain"></div><div class="inner">
+  <div class="brand">
+    <span class="mark"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+    <span class="wordmark">FocusGate</span>
+  </div>
+  <div class="mid">
+    <div class="glyph"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+    <h1>Xong việc rồi<br><span class="gtext">hẵng lướt.</span></h1>
+    <p>Facebook, TikTok, YouTube bị khoá cho tới khi bạn tick xong việc.</p>
+  </div>
+  <div class="foot">
+    <span class="chip"><span class="dot"></span>Chrome + macOS</span>
+    <span class="chip"><span class="dot"></span>103 bài kiểm thử</span>
+    <span class="chip"><span class="dot"></span>Miễn phí</span>
+  </div>
+</div></div>
+
+<!-- 1080x1920 -->
+<div class="card story"><div class="aurora"></div><div class="grain"></div><div class="inner">
+  <div>
+    <div class="brand" style="justify-content:center">
+      <span class="mark"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+      <span class="wordmark">FocusGate</span>
+    </div>
+    <h1>Xong việc rồi<br><span class="gtext">hẵng lướt.</span></h1>
+    <p>Cái cổng chặn thật, không phải app nhắc nhở.</p>
+  </div>
+  <img class="shot" src="shots/blocked.webp" alt="">
+  <div class="cta">Tải miễn phí →</div>
+</div></div>
+
+<!-- 1500x500 -->
+<div class="card cover"><div class="aurora"></div><div class="grain"></div><div class="inner">
+  <span class="mark"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+  <div>
+    <div class="wordmark">FocusGate</div>
+    <div class="tag">Xong việc rồi hẵng lướt · Chrome + macOS</div>
+  </div>
+  <div class="chips">
+    <span class="chip"><span class="dot"></span>Chặn ở tầng mạng</span>
+    <span class="chip"><span class="dot"></span>Nhắc ngay khi bật máy</span>
+    <span class="chip"><span class="dot"></span>Dữ liệu 100% trên máy bạn</span>
+  </div>
+</div></div>
+
+<!-- Carousel 1: vấn đề -->
+<div class="card c1"><div class="aurora"></div><div class="grain"></div><div class="inner">
+  <div>
+    <div class="slide-n">01 — VẤN ĐỀ</div>
+    <h1>Mở laptop để làm bài.<br><span class="gtext">40 phút sau vẫn chưa gõ dòng nào.</span></h1>
+    <p>Tab thứ 14. Bạn không nhớ mình mở nó lúc nào, cũng không nhớ định làm gì.</p>
+  </div>
+  <div class="brandfoot">
+    <span class="mark"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+    <span class="wordmark">FocusGate</span>
+    <span class="url">1 / 3</span>
+  </div>
+</div></div>
+
+<!-- Carousel 2: giải pháp -->
+<div class="card c2"><div class="aurora"></div><div class="grain"></div><div class="inner">
+  <div>
+    <div class="slide-n">02 — CÁCH LÀM</div>
+    <h1>Ghi việc.<br><span class="gtext">Cổng khoá lại.</span></h1>
+  </div>
+  <div class="rows">
+    <div class="row"><span class="box"></span>Làm bài tập Giải tích chương 3</div>
+    <div class="row"><span class="box"></span>Ôn 30 từ vựng tiếng Anh</div>
+    <div class="row"><span class="box"></span>Nộp báo cáo thí nghiệm</div>
+  </div>
+  <div class="brandfoot">
+    <span class="mark"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+    <span class="wordmark">FocusGate</span>
+    <span class="url">2 / 3</span>
+  </div>
+</div></div>
+
+<!-- Carousel 3: bằng chứng -->
+<div class="card c3"><div class="aurora"></div><div class="grain"></div><div class="inner">
+  <div>
+    <div class="slide-n">03 — TICK XONG LÀ MỞ</div>
+    <h1>Và nó đưa bạn về<br><span class="gtext">đúng trang vừa định mở.</span></h1>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="n gtext">103</div><div class="l">bài kiểm thử tự động</div></div>
+    <div class="stat"><div class="n">0</div><div class="l">máy chủ · 0 tài khoản</div></div>
+    <div class="stat"><div class="n">100%</div><div class="l">dữ liệu nằm trên máy bạn</div></div>
+    <div class="stat"><div class="n">2</div><div class="l">phút để cài xong</div></div>
+  </div>
+  <div class="brandfoot">
+    <span class="mark"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+    <span class="wordmark">FocusGate</span>
+    <span class="url">3 / 3</span>
+  </div>
+</div></div>
+
+<!-- Mockup: trang chặn trong trình duyệt -->
+<div class="card m1"><div class="aurora"></div><div class="grain"></div><div class="inner">
+  <div class="win">
+    <div class="win-bar">
+      <span class="tl"><i></i><i></i><i></i></span>
+      <span class="omni"><span class="li"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>facebook.com</span>
+    </div>
+    <div class="shotbox"><img src="shots/blocked.webp" alt=""></div>
+  </div>
+</div></div>
+
+<!-- Mockup: bảng điều khiển -->
+<div class="card m2"><div class="aurora"></div><div class="grain"></div><div class="inner">
+  <div class="win">
+    <div class="win-bar">
+      <span class="tl"><i></i><i></i><i></i></span>
+      <span class="omni"><span class="li" style="color:var(--success)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/></svg></span>FocusGate — Bảng điều khiển</span>
+    </div>
+    <div class="shotbox"><img src="shots/dash.webp" alt=""></div>
+  </div>
+</div></div>
+
+<!-- Mockup: màn hình khoá macOS -->
+<div class="card m3"><div class="aurora"></div><div class="grain"></div><div class="inner">
+  <div class="win">
+    <div class="win-bar">
+      <span class="tl mac"><i></i><i></i><i></i></span>
+      <span class="win-title">FocusGate</span>
+      <span style="width:66px"></span>
+    </div>
+    <div class="shotbox"><img src="shots/desktop.webp" alt=""></div>
+  </div>
+</div></div>
+
+</body>
+</html>

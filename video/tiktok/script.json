@@ -1,0 +1,191 @@
+{
+  "speed": 1.08,
+  "scenes": [
+    {
+      "id": "hook",
+      "title": "Chưa xong việc?\nKhỏi lướt.",
+      "sentences": [
+        [
+          [
+            "Mở máy định học,",
+            "Mở máy định học,"
+          ],
+          [
+            "mà tay cứ tự mở Facebook?",
+            "mà tay cứ tự mở phây búc?"
+          ]
+        ],
+        [
+          [
+            "Nên mình tự code một cái cổng:",
+            "Nên mình tự cốt một cái cổng."
+          ]
+        ],
+        [
+          [
+            "chưa xong việc thì khỏi vào.",
+            "Chưa xong việc thì khỏi vào."
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "setup",
+      "title": "Bước 1:\nghi việc cần làm",
+      "sentences": [
+        [
+          [
+            "Ghi lại việc cần làm, đặt hạn chót.",
+            "Ghi lại việc cần làm, đặt hạn chót."
+          ]
+        ],
+        [
+          [
+            "Từ giờ tới lúc xong,",
+            "Từ giờ tới lúc xong,"
+          ],
+          [
+            "các trang giải trí bị khoá.",
+            "các trang giải trí bị khoá."
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "block",
+      "title": "Mở Facebook?\nChặn ngay.",
+      "sentences": [
+        [
+          [
+            "Gõ thẳng đường dẫn hay bấm link,",
+            "Gõ thẳng đường dẫn hay bấm linh,"
+          ],
+          [
+            "đều bị chặn lại.",
+            "đều bị chặn lại."
+          ]
+        ],
+        [
+          [
+            "Trang mở sẵn từ trước cũng bị kéo về.",
+            "Trang mở sẵn từ trước cũng bị kéo về."
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "escape",
+      "title": "Muốn lướt sớm?\nĐược. Nhưng có giá.",
+      "sentences": [
+        [
+          [
+            "Muốn lướt sớm cũng được.",
+            "Muốn lướt sớm cũng được."
+          ]
+        ],
+        [
+          [
+            "Nhưng dán vào không tính,",
+            "Nhưng dán vào không tính,"
+          ],
+          [
+            "phải gõ tay 121 ký tự,",
+            "phải gõ tay một trăm hai mươi mốt ký tự,"
+          ]
+        ],
+        [
+          [
+            "chờ đủ 30 giây,",
+            "chờ đủ ba mươi giây,"
+          ],
+          [
+            "và mất sạch chuỗi 12 ngày.",
+            "và mất sạch chuỗi mười hai ngày."
+          ]
+        ],
+        [
+          [
+            "Mà mỗi ngày chỉ được hai lượt.",
+            "Mà mỗi ngày, chỉ được hai lượt."
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "done",
+      "title": "Xong việc thật,\ncổng mới mở.",
+      "sentences": [
+        [
+          [
+            "Làm xong thật rồi thì đánh dấu một cái.",
+            "Làm xong thật rồi, thì đánh dấu một cái."
+          ]
+        ],
+        [
+          [
+            "Cổng mở ngay,",
+            "Cổng mở ngay,"
+          ],
+          [
+            "đưa bạn về đúng trang vừa định vào.",
+            "đưa bạn về đúng trang vừa định vào."
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "popup",
+      "title": "Tick nhanh ngay\ntrên thanh công cụ",
+      "sentences": [
+        [
+          [
+            "Hoặc đánh dấu ngay trên thanh công cụ,",
+            "Hoặc đánh dấu ngay trên thanh công cụ,"
+          ],
+          [
+            "khỏi mở bảng điều khiển.",
+            "khỏi mở bảng điều khiển."
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "mac",
+      "title": "Bản cho máy Mac:\nchặn cả ứng dụng",
+      "sentences": [
+        [
+          [
+            "Trên máy tính, vừa mở máy là nó hiện ra,",
+            "Trên máy tính, vừa mở máy là nó hiện ra,"
+          ],
+          [
+            "chặn luôn cả ứng dụng ngoài trình duyệt.",
+            "chặn luôn cả ứng dụng ngoài trình duyệt."
+          ]
+        ]
+      ]
+    },
+    {
+      "id": "cta",
+      "title": "",
+      "sentences": [
+        [
+          [
+            "Miễn phí. Không cần tài khoản.",
+            "Miễn phí. Không cần tài khoản."
+          ]
+        ],
+        [
+          [
+            "Tải ở phần giới thiệu,",
+            "Tải ở phần giới thiệu,"
+          ],
+          [
+            "dùng thử một tuần đi.",
+            "dùng thử một tuần đi."
+          ]
+        ]
+      ]
+    }
+  ]
+}

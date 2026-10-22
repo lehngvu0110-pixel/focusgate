@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FocusGate — Bảng điều khiển</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="../icons/icon32.png">
+<style>
+  .hero-line { display:flex; align-items:baseline; gap:10px; }
+  .sec-title { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .sec-title::after { content:''; flex:1; height:1px; background:var(--border); }
+  .kbd { font-family:var(--mono); font-size:10.5px; padding:1px 5px; border-radius:4px;
+         background:var(--surface-3); border:1px solid var(--border-strong); color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="logo"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+    <div class="grow">
+      <div class="hero-line">
+        <span class="wordmark">FocusGate</span>
+        <span class="badge" style="font-family:var(--mono);letter-spacing:-.02em">v1.0</span>
+      </div>
+      <div class="tiny muted">Xong việc rồi hẵng lướt</div>
+    </div>
+    <div id="statusPill"></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="tasks" aria-selected="true">Việc cần làm</button>
+    <button role="tab" data-tab="block" aria-selected="false">Chặn &amp; lịch</button>
+    <button role="tab" data-tab="stats" aria-selected="false">Thống kê</button>
+    <button role="tab" data-tab="settings" aria-selected="false">Cài đặt</button>
+  </nav>
+
+  <!-- ============ VIỆC ============ -->
+  <div class="panel active" id="panel-tasks">
+    <div class="card card-pad" style="margin-bottom:22px">
+      <div class="sec-title"><h2>Thêm việc mới</h2></div>
+      <div class="field">
+        <label for="tTitle">Việc cần làm</label>
+        <input type="text" id="tTitle" placeholder="VD: Hoàn thành báo cáo thí nghiệm Vật lý" maxlength="200">
+      </div>
+      <div class="field">
+        <label for="tNote">Ghi chú <span class="muted">— không bắt buộc</span></label>
+        <textarea id="tNote" placeholder="Các bước nhỏ, link tài liệu, lưu ý…" maxlength="1000"></textarea>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label for="tRemind">Bắt đầu nhắc / khoá lúc</label>
+          <input type="datetime-local" id="tRemind">
+          <div class="tiny muted" style="margin-top:5px">Để trống = khoá ngay bây giờ</div>
+        </div>
+        <div class="field">
+          <label for="tDue">Hạn chót</label>
+          <input type="datetime-local" id="tDue">
+          <div class="tiny muted" style="margin-top:5px">Quá hạn sẽ tự động thành việc bắt buộc</div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label for="tRepeat">Lặp lại</label>
+          <select id="tRepeat">
+            <option value="none">Không lặp</option>
+            <option value="daily">Hằng ngày</option>
+            <option value="weekdays">Thứ 2 – Thứ 6</option>
+            <option value="weekly">Hằng tuần</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="tEstimate">Ước lượng (phút)</label>
+          <input type="number" id="tEstimate" value="25" min="5" max="600" step="5">
+        </div>
+      </div>
+      <div class="field">
+        <label>Tab công việc</label>
+        <div class="row-wrap" style="margin-bottom:9px">
+          <button class="btn btn-sm" id="tPickTabs">Chọn từ tab đang mở…</button>
+          <button class="btn btn-sm btn-ghost" id="tAddUrl">Thêm link thủ công</button>
+        </div>
+        <div class="chips" id="tTabs"></div>
+      </div>
+      <div class="row-wrap" style="margin-top:4px">
+        <label class="switch" style="margin:0">
+          <input type="checkbox" id="tEnforce" checked><span class="track"></span>
+          <span class="small" style="color:var(--text)">Bắt buộc — chặn web cho tới khi xong</span>
+        </label>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="tAdd">Thêm việc</button>
+      </div>
+    </div>
+
+    <div class="sec-title">
+      <h2 id="pendingHead">Chưa xong</h2>
+      <button class="btn btn-sm btn-ghost" id="toggleDone" style="order:3">Hiện việc đã xong</button>
+    </div>
+    <div class="stack" id="pendingList"></div>
+    <div id="doneWrap" class="hidden" style="margin-top:26px">
+      <div class="sec-title"><h2>Đã xong</h2></div>
+      <div class="stack" id="doneList"></div>
+    </div>
+  </div>
+
+  <!-- ============ CHẶN & LỊCH ============ -->
+  <div class="panel" id="panel-block">
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div class="sec-title"><h2>Chế độ chặn</h2></div>
+      <p class="small muted" style="margin:-4px 0 14px">Áp dụng mỗi khi cổng đang khoá.</p>
+      <div class="stack">
+        <label class="task opt-card">
+          <input type="radio" name="mode" value="allowlist" id="modeAllow">
+          <div class="grow">
+            <div class="strong" style="font-size:13.5px">Khoá chặt — chỉ cho vào danh sách trắng</div>
+            <div class="small muted">Mọi trang khác đều bị chặn. Đúng nghĩa "không cho lướt gì khác".</div>
+          </div>
+          <span class="badge badge-accent">Khuyến nghị</span>
+        </label>
+        <label class="task opt-card">
+          <input type="radio" name="mode" value="blocklist" id="modeBlock">
+          <div class="grow">
+            <div class="strong" style="font-size:13.5px">Nhẹ hơn — chỉ chặn danh sách đen</div>
+            <div class="small muted">Trang giải trí bị chặn, còn lại vẫn vào được bình thường.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:16px">
+      <div class="card card-pad">
+        <h3 style="margin-bottom:3px">Danh sách trắng</h3>
+        <p class="tiny muted" style="margin-bottom:11px">Luôn vào được, kể cả khi khoá chặt.</p>
+        <div class="row" style="margin-bottom:10px">
+          <input type="text" id="allowInput" class="grow" placeholder="lms.hcmut.edu.vn">
+          <button class="btn btn-sm" id="allowAdd">Thêm</button>
+        </div>
+        <div class="list-editor" id="allowList"></div>
+      </div>
+      <div class="card card-pad">
+        <h3 style="margin-bottom:3px">Danh sách đen</h3>
+        <p class="tiny muted" style="margin-bottom:11px">Bị chặn khi dùng chế độ nhẹ.</p>
+        <div class="row" style="margin-bottom:10px">
+          <input type="text" id="blockInput" class="grow" placeholder="tiktok.com">
+          <button class="btn btn-sm" id="blockAdd">Thêm</button>
+        </div>
+        <div class="list-editor" id="blockList"></div>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="sec-title">
+        <h2>Khung giờ tập trung</h2>
+        <button class="btn btn-sm btn-primary" id="schedAdd" style="order:3">Thêm khung giờ</button>
+      </div>
+      <p class="small muted" style="margin:-4px 0 14px">Tự động khoá cổng trong khung giờ này, kể cả khi không có việc nào. Hỗ trợ khung qua nửa đêm.</p>
+      <div class="stack" id="schedList"></div>
+    </div>
+  </div>
+
+  <!-- ============ THỐNG KÊ ============ -->
+  <div class="panel" id="panel-stats">
+    <div class="stat-grid" style="margin-bottom:16px" id="statGrid"></div>
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div class="sec-title">
+        <h2 id="chartTitle">Số phút tập trung mỗi ngày</h2>
+        <span class="badge" id="chartRange" style="order:3">14 ngày gần nhất</span>
+      </div>
+      <p class="small muted" style="margin:-4px 0 4px">Tính từ các phiên Pomodoro đã hoàn thành.</p>
+      <div class="chart" id="chart"></div>
+      <details style="margin-top:16px">
+        <summary class="small muted" style="cursor:pointer">Xem dạng bảng</summary>
+        <div id="chartTable" style="margin-top:12px"></div>
+      </details>
+    </div>
+    <div class="card card-pad">
+      <div class="sec-title"><h2>Nhật ký hôm nay</h2></div>
+      <div id="todayLog"></div>
+    </div>
+  </div>
+
+  <!-- ============ CÀI ĐẶT ============ -->
+  <div class="panel" id="panel-settings">
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div class="sec-title"><h2>Giao diện</h2></div>
+      <div class="row-wrap">
+        <label for="themeSelect" style="margin:0">Chủ đề</label>
+        <select id="themeSelect" style="width:auto;min-width:170px">
+          <option value="dark">Tối (mặc định)</option>
+          <option value="light">Sáng</option>
+        </select>
+        <div class="spacer"></div>
+        <span class="tiny muted">FocusGate được thiết kế cho nền tối.</span>
+      </div>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div class="sec-title"><h2>Hành vi</h2></div>
+      <div class="stack" id="behaviorToggles"></div>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div class="sec-title"><h2>Pomodoro</h2></div>
+      <div class="two-col">
+        <div class="field"><label for="pFocus">Phiên tập trung (phút)</label><input type="number" id="pFocus" min="5" max="120" step="5"></div>
+        <div class="field"><label for="pBreak">Nghỉ ngắn (phút)</label><input type="number" id="pBreak" min="1" max="30"></div>
+        <div class="field"><label for="pLong">Nghỉ dài (phút)</label><input type="number" id="pLong" min="5" max="60" step="5"></div>
+        <div class="field"><label for="pCycles">Số phiên trước khi nghỉ dài</label><input type="number" id="pCycles" min="2" max="8"></div>
+      </div>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div class="sec-title"><h2>Lối thoát khẩn cấp</h2></div>
+      <p class="small muted" style="margin:-4px 0 14px">Càng khắt khe thì càng ít bị cám dỗ. Khuyến nghị giữ nguyên.</p>
+      <div class="two-col">
+        <div class="field"><label for="eCooldown">Thời gian chờ (giây)</label><input type="number" id="eCooldown" min="0" max="300" step="5"></div>
+        <div class="field"><label for="eUnlock">Mở cổng trong (phút)</label><input type="number" id="eUnlock" min="1" max="60"></div>
+        <div class="field"><label for="eMax">Số lượt mỗi ngày</label><input type="number" id="eMax" min="0" max="10"></div>
+        <div class="field" style="display:flex;align-items:flex-end">
+          <label class="switch" style="margin-bottom:9px">
+            <input type="checkbox" id="eEnabled"><span class="track"></span>
+            <span class="small" style="color:var(--text)">Cho phép thoát khẩn cấp</span>
+          </label>
+        </div>
+      </div>
+      <div class="tiny muted">Tắt hẳn = chế độ cứng tuyệt đối: chỉ hoàn thành việc mới mở được cổng.</div>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div class="sec-title"><h2>App desktop</h2></div>
+      <p class="small muted" style="margin:-4px 0 14px">App FocusGate trên macOS lo phần nhắc khi bật máy và chặn ứng dụng ngoài trình duyệt. Khi cả hai cùng chạy, danh sách việc được dùng chung.</p>
+      <div class="row-wrap">
+        <span id="desktopStatus" class="status-pill" style="color:var(--muted)"><span class="dot"></span>Đang kiểm tra…</span>
+        <div class="spacer"></div>
+        <label class="switch">
+          <input type="checkbox" id="syncEnabled"><span class="track"></span>
+          <span class="small" style="color:var(--text)">Bật đồng bộ</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="sec-title"><h2>Dữ liệu</h2></div>
+      <p class="small muted" style="margin:-4px 0 14px">Toàn bộ dữ liệu nằm trên máy bạn, không gửi đi đâu cả.</p>
+      <div class="row-wrap">
+        <button class="btn" id="exportBtn">Xuất tệp sao lưu</button>
+        <button class="btn" id="importBtn">Nhập từ tệp</button>
+        <input type="file" id="importFile" accept="application/json" class="hidden">
+        <div class="spacer"></div>
+        <button class="btn btn-danger" id="resetBtn">Xoá sạch dữ liệu</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="module" src="dashboard.js"></script>
+</body>
+</html>

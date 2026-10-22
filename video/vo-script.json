@@ -1,0 +1,259 @@
+{
+  "note": "Kịch bản lồng tiếng. start/until tính bằng giây trên video thành phẩm; ranh giới đoạn đã đo trên chính tệp MP4.",
+  "demo": {
+    "bounds": [
+      0,
+      4.0,
+      13.9,
+      22.4,
+      31.2,
+      36.8,
+      44.8,
+      51.6,
+      58.7
+    ],
+    "vi": [
+      {
+        "start": 1.5,
+        "until": 4.0,
+        "text": "Xong việc rồi hẵng lướt."
+      },
+      {
+        "start": 4.6,
+        "until": 13.9,
+        "text": "Đầu tiên, ghi việc cần làm. Gắn luôn hạn chót, và cụm tab bạn thật sự cần."
+      },
+      {
+        "start": 14.2,
+        "until": 15.4,
+        "text": "Giờ thử mở Facebook."
+      },
+      {
+        "start": 15.5,
+        "until": 19.5,
+        "text": "Bị chặn. Chặn ở tầng mạng, gõ thẳng đường dẫn hay bấm link đều không lọt."
+      },
+      {
+        "start": 19.7,
+        "until": 22.4,
+        "text": "Tab đang mở sẵn cũng bị kéo về."
+      },
+      {
+        "start": 23.0,
+        "until": 31.2,
+        "text": "Tick xong việc, cổng mở ngay. Và nó đưa bạn về đúng trang vừa định mở."
+      },
+      {
+        "start": 31.8,
+        "until": 36.8,
+        "text": "Tick nhanh ngay trên thanh công cụ, không cần mở bảng điều khiển."
+      },
+      {
+        "start": 37.4,
+        "until": 44.8,
+        "text": "Còn app trên máy Mac thì bật máy là hiện ngay, chặn cả ứng dụng ngoài trình duyệt."
+      },
+      {
+        "start": 45.4,
+        "until": 51.6,
+        "text": "Không máy chủ, không tài khoản. Dữ liệu nằm hết trên máy bạn."
+      },
+      {
+        "start": 52.2,
+        "until": 58.7,
+        "text": "Miễn phí, mã nguồn mở. Link ở phần giới thiệu."
+      }
+    ],
+    "en": [
+      {
+        "start": 1.5,
+        "until": 4.0,
+        "text": "Finish the work. Then scroll."
+      },
+      {
+        "start": 4.6,
+        "until": 13.9,
+        "text": "First, write down what you have to do. Add a deadline, and the tabs you actually need."
+      },
+      {
+        "start": 14.2,
+        "until": 15.4,
+        "text": "Now try opening Facebook."
+      },
+      {
+        "start": 15.5,
+        "until": 19.4,
+        "text": "Blocked at the network layer. The URL, a link, neither gets through."
+      },
+      {
+        "start": 19.7,
+        "until": 22.4,
+        "text": "Tabs already open get pulled back too."
+      },
+      {
+        "start": 23.0,
+        "until": 31.2,
+        "text": "Check the tasks off and the gate opens, and it sends you back to the page you wanted."
+      },
+      {
+        "start": 31.8,
+        "until": 36.8,
+        "text": "Quick check-off right from the toolbar. No dashboard needed."
+      },
+      {
+        "start": 37.4,
+        "until": 44.8,
+        "text": "The Mac app shows up the moment you open your laptop, and blocks apps outside the browser too."
+      },
+      {
+        "start": 45.4,
+        "until": 51.6,
+        "text": "No server, no account. Everything stays on your machine."
+      },
+      {
+        "start": 52.2,
+        "until": 58.7,
+        "text": "Free and open source. Link in bio."
+      }
+    ]
+  },
+  "escape": {
+    "bounds": [
+      0,
+      5.0,
+      11.4,
+      15.0,
+      25.0,
+      30.633,
+      35.533,
+      39.833,
+      46.033,
+      53.233,
+      59.433
+    ],
+    "vi": [
+      {
+        "start": 1.5,
+        "until": 5.0,
+        "text": "Muốn lướt sớm? Được thôi. Nhưng có giá."
+      },
+      {
+        "start": 5.6,
+        "until": 11.4,
+        "text": "Mở lối thoát ra xem."
+      },
+      {
+        "start": 11.9,
+        "until": 14.1,
+        "text": "Mất chuỗi mười hai ngày. Trừ năm mươi điểm."
+      },
+      {
+        "start": 14.3,
+        "until": 15.3,
+        "text": "Dán vào? Không tính."
+      },
+      {
+        "start": 15.6,
+        "until": 18.3,
+        "text": "Ô nhập chặn cả dán lẫn kéo thả. Phải gõ tay."
+      },
+      {
+        "start": 18.6,
+        "until": 25.0,
+        "text": "Một trăm hai mươi mốt ký tự. Sai một chữ là nút vẫn khoá."
+      },
+      {
+        "start": 25.5,
+        "until": 30.6,
+        "text": "Rồi chờ đủ ba mươi giây. Đoạn này mình tua nhanh cho đỡ dài."
+      },
+      {
+        "start": 31.2,
+        "until": 35.5,
+        "text": "Xong. Cổng mở mười phút. Chuỗi về không, trừ năm mươi điểm."
+      },
+      {
+        "start": 36.1,
+        "until": 39.8,
+        "text": "Đổi ý được không? Được. Một nút là khoá lại ngay."
+      },
+      {
+        "start": 40.4,
+        "until": 46.0,
+        "text": "Hoặc tắt hẳn lối thoát. Khi đó chỉ hoàn thành việc mới mở được cổng."
+      },
+      {
+        "start": 46.6,
+        "until": 53.2,
+        "text": "Ba mươi giây chờ. Một trăm hai mươi mốt ký tự. Chuỗi về không. Hai lượt mỗi ngày."
+      },
+      {
+        "start": 53.8,
+        "until": 59.4,
+        "text": "Ma sát đúng chỗ. Link ở phần giới thiệu."
+      }
+    ],
+    "en": [
+      {
+        "start": 1.5,
+        "until": 5.0,
+        "text": "Want to scroll early? Sure. But it costs you."
+      },
+      {
+        "start": 5.6,
+        "until": 11.4,
+        "text": "Let's open the escape hatch."
+      },
+      {
+        "start": 11.9,
+        "until": 14.1,
+        "text": "Twelve day streak, gone. Minus fifty points."
+      },
+      {
+        "start": 14.2,
+        "until": 15.4,
+        "text": "Paste it? Doesn't count."
+      },
+      {
+        "start": 16.0,
+        "until": 18.8,
+        "text": "The field blocks paste and drop. Type it by hand."
+      },
+      {
+        "start": 19.0,
+        "until": 25.0,
+        "text": "A hundred and twenty one characters. One wrong letter and the button stays locked."
+      },
+      {
+        "start": 25.5,
+        "until": 30.6,
+        "text": "Then you wait a full thirty seconds. I sped this part up."
+      },
+      {
+        "start": 31.2,
+        "until": 35.5,
+        "text": "Done. The gate opens for ten minutes. Streak to zero, minus fifty points."
+      },
+      {
+        "start": 36.1,
+        "until": 39.8,
+        "text": "Changed your mind? One button locks it again."
+      },
+      {
+        "start": 40.4,
+        "until": 46.0,
+        "text": "Or switch the hatch off entirely. Then only finishing the work opens the gate."
+      },
+      {
+        "start": 46.6,
+        "until": 53.2,
+        "text": "Thirty seconds. A hundred and twenty one characters. Streak to zero. Twice a day."
+      },
+      {
+        "start": 53.8,
+        "until": 59.4,
+        "text": "Friction in the right place. Link in bio."
+      }
+    ]
+  }
+}

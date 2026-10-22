@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.DS_Store
+__pycache__/
+
+# sinh ra khi quay/dựng video
+video/clips/
+video/assets/
+video/_seg/
+video/cert/
+video/audio/*.wav
+video/audio/vo-src/
+video/audio/_vo_tmp/
+video/tiktok/work/

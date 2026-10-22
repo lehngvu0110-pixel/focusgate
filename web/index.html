@@ -1,0 +1,746 @@
+<title>FocusGate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#08080C; --bg-2:#0B0B11; --surface:#101017; --surface-2:#16161F; --surface-3:#1E1E29;
+  --border:rgba(255,255,255,.08); --border-strong:rgba(255,255,255,.14); --border-bright:rgba(255,255,255,.22);
+  --hairline:inset 0 1px 0 rgba(255,255,255,.05);
+  --text:#F2F2F6; --text-2:#A5A5B8; --muted:#6C6C80; --faint:#4A4A5C;
+  --accent:#6E5BFF; --accent-hi:#8B7BFF; --accent-2:#22D3EE; --accent-text:#ADA0FF;
+  --accent-soft:rgba(110,91,255,.14); --accent-line:rgba(110,91,255,.34);
+  --grad:linear-gradient(135deg,#6E5BFF 0%,#7D6BFF 42%,#22D3EE 140%);
+  --grad-btn:linear-gradient(180deg,#8072FF 0%,#6353F2 100%);
+  --grad-text:linear-gradient(100deg,#FFFFFF 8%,#C9C0FF 50%,#7FE6F5 94%);
+  --danger:#FF5A60; --danger-soft:rgba(255,90,96,.13); --danger-line:rgba(255,90,96,.32);
+  --success:#2DD4A7; --success-soft:rgba(45,212,167,.13); --success-line:rgba(45,212,167,.32);
+  --warn:#FFB020; --warn-soft:rgba(255,176,32,.13);
+  --sans:"Be Vietnam Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --r:12px; --r-lg:18px; --r-xl:26px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--sans); font-size:16px; line-height:1.6; letter-spacing:-.011em;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(34% 26% at 10% 2%, rgba(110,91,255,.40) 0%, transparent 72%),
+    radial-gradient(30% 22% at 92% 6%, rgba(34,211,238,.22) 0%, transparent 70%),
+    radial-gradient(70% 22% at 50% -2%, rgba(110,91,255,.14) 0%, transparent 76%);
+  filter:blur(40px);
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.3;
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.06'/%3E%3C/svg%3E");
+}
+.page{position:relative; z-index:2}
+
+/* ---------- Khung ---------- */
+.wrap{max-width:1060px; margin:0 auto; padding-inline:20px}
+section{padding-block:76px}
+@media(max-width:700px){ section{padding-block:52px} }
+
+h1,h2,h3{margin:0; font-weight:800; line-height:1.18; text-wrap:balance}
+h1{font-size:clamp(38px,6.4vw,66px); line-height:1.14; letter-spacing:-.045em}
+h2{font-size:clamp(26px,3.6vw,38px); letter-spacing:-.036em}
+h3{font-size:19px; letter-spacing:-.026em; font-weight:700}
+p{margin:0}
+a{color:inherit; text-decoration:none}
+
+.eyebrow{
+  font-family:var(--sans); font-size:11.5px; font-weight:700; letter-spacing:.15em;
+  text-transform:uppercase; color:var(--muted);
+}
+.lead{font-size:clamp(16px,2vw,19px); color:var(--text-2); max-width:62ch; line-height:1.62}
+.gtext{background:var(--grad-text); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
+.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+
+/* ---------- Nút ---------- */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  font-family:var(--sans); font-size:14.5px; font-weight:600; letter-spacing:-.012em;
+  padding:12px 20px; border-radius:11px; cursor:pointer; white-space:nowrap;
+  color:var(--text); background:var(--surface-2);
+  border:1px solid var(--border-strong); box-shadow:var(--hairline);
+  transition:background .16s var(--ease), border-color .16s var(--ease), transform .09s var(--ease), box-shadow .18s var(--ease);
+}
+.btn:hover{background:var(--surface-3); border-color:var(--border-bright)}
+.btn:active{transform:translateY(1px)}
+.btn:focus-visible{outline:2px solid var(--accent-hi); outline-offset:2px}
+.btn-primary{
+  color:#fff; border-color:transparent; background:var(--grad-btn);
+  box-shadow:0 1px 0 rgba(255,255,255,.3) inset, 0 6px 26px -8px rgba(110,91,255,.95);
+}
+.btn-primary:hover{filter:brightness(1.1)}
+.btn-sm{padding:7px 13px; font-size:13px; border-radius:9px}
+
+/* ---------- Thanh điều hướng ---------- */
+.nav{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:50;
+  backdrop-filter:blur(18px) saturate(160%);
+  background:color-mix(in srgb, var(--bg) 78%, transparent);
+  border-bottom:1px solid var(--border);
+}
+.nav-in{display:flex; align-items:center; gap:14px; height:58px}
+.brand{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:-.03em; font-size:16px}
+.mark{
+  width:28px; height:28px; border-radius:9px; display:grid; place-items:center; flex:none;
+  background:var(--grad); color:#fff;
+  box-shadow:0 0 0 1px rgba(255,255,255,.14) inset, 0 4px 16px -6px rgba(110,91,255,.9);
+}
+.mark svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.nav-links{display:flex; gap:4px; margin-left:12px}
+.nav-links a{
+  font-size:13.5px; font-weight:500; color:var(--muted); padding:6px 11px; border-radius:8px;
+  transition:color .15s var(--ease), background .15s var(--ease);
+}
+.nav-links a:hover{color:var(--text); background:var(--surface-2)}
+@media(max-width:760px){ .nav-links{display:none} }
+.lang{
+  display:flex; gap:2px; padding:3px; border-radius:9px;
+  background:var(--surface-2); border:1px solid var(--border);
+}
+.lang button{
+  font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:.06em;
+  padding:4px 9px; border-radius:6px; border:0; cursor:pointer;
+  background:transparent; color:var(--muted); transition:all .15s var(--ease);
+}
+.lang button[aria-pressed="true"]{background:var(--surface-3); color:var(--text)}
+
+/* ---------- Hero ---------- */
+.hero{padding-block:clamp(48px,8vw,92px) 40px}
+.pill{
+  display:inline-flex; align-items:center; gap:9px; margin-bottom:26px;
+  padding:6px 14px 6px 8px; border-radius:999px;
+  background:var(--surface-2); border:1px solid var(--border-strong);
+  font-size:12.5px; color:var(--text-2); box-shadow:var(--hairline);
+}
+.pill .tag{
+  font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.08em;
+  padding:2px 7px; border-radius:999px; background:var(--accent-soft);
+  color:var(--accent-text); border:1px solid var(--accent-line); text-transform:uppercase;
+}
+.hero h1{margin-bottom:20px; max-width:16ch}
+.hero .lead{margin-bottom:30px}
+.hero-cta{display:flex; gap:11px; flex-wrap:wrap; align-items:center}
+.hero-note{font-size:12.5px; color:var(--faint); margin-top:14px}
+
+/* ---------- Demo cổng chặn ---------- */
+.demo{margin-top:52px}
+.browser{
+  border-radius:var(--r-xl); overflow:hidden;
+  background:var(--bg-2); border:1px solid var(--border-strong);
+  box-shadow:0 40px 100px -30px rgba(0,0,0,.9), 0 0 0 1px rgba(110,91,255,.10), var(--hairline);
+}
+.browser-bar{
+  display:flex; align-items:center; gap:10px; padding:11px 14px;
+  background:var(--surface); border-bottom:1px solid var(--border);
+}
+.dots{display:flex; gap:6px}
+.dots i{width:10px; height:10px; border-radius:50%; background:var(--surface-3); display:block}
+.omni{
+  flex:1; display:flex; align-items:center; gap:8px; min-width:0;
+  font-family:var(--mono); font-size:12px; color:var(--text-2);
+  padding:5px 12px; border-radius:999px;
+  background:var(--bg-2); border:1px solid var(--border);
+}
+.omni .host{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.omni .lockicon{flex:none; color:var(--danger); transition:color .3s var(--ease)}
+.browser.is-open .omni .lockicon{color:var(--success)}
+
+.screen{position:relative; min-height:430px; padding:38px 26px 30px; text-align:center;
+        background:radial-gradient(60% 40% at 50% 0%, rgba(110,91,255,.10), transparent 70%)}
+@media(max-width:640px){ .screen{padding:28px 16px 24px; min-height:0} }
+.glyph{
+  position:relative; width:64px; height:64px; margin:0 auto 20px; border-radius:19px;
+  display:grid; place-items:center; color:var(--danger);
+  background:var(--surface-2); border:1px solid var(--danger-line);
+  box-shadow:0 0 44px -12px var(--danger), var(--hairline);
+  transition:color .4s var(--ease), border-color .4s var(--ease), box-shadow .4s var(--ease);
+}
+.glyph svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.is-open .glyph{color:var(--success); border-color:var(--success-line);
+                box-shadow:0 0 44px -12px var(--success), var(--hairline)}
+.screen h3{font-size:clamp(22px,3.4vw,30px); line-height:1.2; letter-spacing:-.04em; margin-bottom:9px}
+.screen .sub{color:var(--text-2); font-size:14.5px; max-width:44ch; margin:0 auto 22px}
+
+.demo-tasks{display:flex; flex-direction:column; gap:9px; max-width:430px; margin:0 auto; text-align:left}
+.dtask{
+  display:flex; align-items:center; gap:12px; padding:13px 15px; border-radius:var(--r);
+  background:var(--surface); border:1px solid var(--border); box-shadow:var(--hairline);
+  transition:opacity .3s var(--ease), border-color .2s var(--ease);
+  position:relative;
+}
+.dtask::before{
+  content:''; position:absolute; left:0; top:11px; bottom:11px; width:2.5px; border-radius:0 3px 3px 0;
+  background:linear-gradient(180deg,var(--danger),rgba(255,90,96,.3));
+  box-shadow:0 0 12px -2px var(--danger); transition:opacity .3s var(--ease);
+}
+.dtask.done{opacity:.4}
+.dtask.done::before{opacity:0}
+.dtask.done .dt-title{text-decoration:line-through}
+.dt-title{font-size:14px; font-weight:600; letter-spacing:-.015em}
+.dt-meta{font-size:11px; color:var(--muted); margin-top:2px}
+.chk{
+  width:21px; height:21px; flex:none; border-radius:6.5px; padding:0; cursor:pointer;
+  border:1.5px solid var(--border-bright); background:var(--surface-2);
+  display:grid; place-items:center; transition:all .2s var(--ease);
+}
+.chk:hover{border-color:var(--success); background:var(--success-soft); transform:scale(1.07)}
+.chk:focus-visible{outline:2px solid var(--accent-hi); outline-offset:2px}
+.chk svg{width:12px; height:12px; opacity:0; transform:scale(.4); transition:all .22s var(--ease)}
+.chk svg path{stroke:#04120D; stroke-width:3; fill:none; stroke-linecap:round; stroke-linejoin:round}
+.chk[aria-checked="true"]{background:var(--success); border-color:var(--success);
+  box-shadow:0 0 14px -2px var(--success)}
+.chk[aria-checked="true"] svg{opacity:1; transform:scale(1)}
+
+.demo-open{display:none; max-width:430px; margin:0 auto; text-align:left}
+.browser.is-open .demo-open{display:block; animation:rise .45s var(--ease)}
+.browser.is-open .demo-tasks{display:none}
+@keyframes rise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+.feed-row{display:flex; gap:11px; align-items:center; padding:11px 0; border-bottom:1px solid var(--border)}
+.feed-av{width:34px; height:34px; border-radius:50%; background:var(--surface-3); flex:none}
+.feed-l{height:9px; border-radius:99px; background:var(--surface-3)}
+.demo-reset{margin-top:20px; font-size:12.5px; color:var(--muted); background:none; border:0;
+            cursor:pointer; font-family:var(--sans); text-decoration:underline; text-underline-offset:3px}
+.demo-reset:hover{color:var(--text-2)}
+.demo-cap{text-align:center; font-size:12.5px; color:var(--faint); margin-top:16px}
+
+/* ---------- Dải số ---------- */
+.strip{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:1px; overflow:hidden;
+  background:var(--border); border:1px solid var(--border); border-radius:var(--r-lg);
+}
+@media(max-width:640px){ .strip{grid-template-columns:repeat(2,1fr)} }
+.strip div{background:var(--bg-2); padding:20px 18px; text-align:center}
+.strip .n{font-family:var(--mono); font-size:27px; font-weight:700; letter-spacing:-.05em; line-height:1.1}
+.strip .l{font-size:12px; color:var(--muted); margin-top:7px}
+
+/* ---------- Các bước ---------- */
+.steps{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:38px}
+@media(max-width:820px){ .steps{grid-template-columns:1fr} }
+.step{position:relative; padding:24px 22px; border-radius:var(--r-lg);
+      background:var(--surface); border:1px solid var(--border); box-shadow:var(--hairline)}
+.step .idx{
+  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.1em;
+  color:var(--accent-text); margin-bottom:14px; display:block;
+}
+.step h3{margin-bottom:8px}
+.step p{font-size:14px; color:var(--text-2); line-height:1.6}
+
+/* ---------- Ảnh sản phẩm ---------- */
+.shots{display:grid; grid-template-columns:1.35fr 1fr; gap:14px; margin-top:38px}
+@media(max-width:820px){ .shots{grid-template-columns:1fr} }
+figure{margin:0; border-radius:var(--r-lg); overflow:hidden;
+       background:var(--bg-2); border:1px solid var(--border); box-shadow:var(--hairline)}
+figure img{display:block; width:100%; max-width:100%; height:auto}
+figcaption{padding:13px 16px; font-size:12.5px; color:var(--muted); border-top:1px solid var(--border)}
+figcaption b{color:var(--text-2); font-weight:600}
+
+/* ---------- Tính năng ---------- */
+.feats{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:38px}
+@media(max-width:900px){ .feats{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:600px){ .feats{grid-template-columns:1fr} }
+.feat{padding:22px; border-radius:var(--r-lg); background:var(--surface);
+      border:1px solid var(--border); box-shadow:var(--hairline);
+      transition:border-color .18s var(--ease), transform .18s var(--ease)}
+.feat:hover{border-color:var(--border-strong); transform:translateY(-2px)}
+.feat .ic{
+  width:34px; height:34px; border-radius:10px; display:grid; place-items:center; margin-bottom:14px;
+  background:var(--accent-soft); border:1px solid var(--accent-line); color:var(--accent-text);
+}
+.feat .ic svg{width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
+.feat h3{font-size:15.5px; margin-bottom:6px}
+.feat p{font-size:13.5px; color:var(--text-2); line-height:1.6}
+
+/* ---------- Bảng giới hạn ---------- */
+.limits{margin-top:34px; border-radius:var(--r-lg); overflow:hidden;
+        border:1px solid var(--border); background:var(--bg-2)}
+.lrow{display:grid; grid-template-columns:1fr auto; gap:16px; align-items:center;
+      padding:15px 20px; border-bottom:1px solid var(--border)}
+.lrow:last-child{border-bottom:0}
+.lrow span{font-size:14px; color:var(--text-2)}
+.verdict{display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600;
+         font-family:var(--mono); letter-spacing:-.01em; white-space:nowrap}
+.yes{color:var(--success)} .no{color:var(--danger)}
+
+/* ---------- FAQ ---------- */
+.faq{margin-top:34px; display:flex; flex-direction:column; gap:9px}
+details{border-radius:var(--r); background:var(--surface); border:1px solid var(--border); box-shadow:var(--hairline)}
+summary{cursor:pointer; list-style:none; padding:16px 20px; font-size:15px; font-weight:600;
+        letter-spacing:-.018em; display:flex; align-items:center; gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+'; margin-left:auto; color:var(--muted); font-family:var(--mono); font-size:17px; flex:none}
+details[open] summary::after{content:'−'}
+details[open] summary{color:var(--text)}
+details p{padding:0 20px 18px; font-size:14px; color:var(--text-2); line-height:1.65; max-width:70ch}
+
+/* ---------- Tải về ---------- */
+.dl{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:34px}
+@media(max-width:760px){ .dl{grid-template-columns:1fr} }
+.dlcard{padding:26px; border-radius:var(--r-lg); background:var(--surface);
+        border:1px solid var(--border); box-shadow:var(--hairline)}
+.dlcard h3{margin-bottom:6px}
+.dlcard .plat{font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:.06em;
+              text-transform:uppercase; margin-bottom:14px}
+.dlcard ol{margin:0 0 18px; padding-left:19px; font-size:13.5px; color:var(--text-2); line-height:1.75}
+.dlcard ol::marker{color:var(--muted)}
+.dlcard code{font-family:var(--mono); font-size:12px; background:var(--surface-3);
+             padding:1.5px 6px; border-radius:5px; color:var(--accent-text)}
+
+/* ---------- Chân trang ---------- */
+footer{border-top:1px solid var(--border); padding-block:36px; margin-top:20px}
+.foot-in{display:flex; gap:16px; align-items:center; flex-wrap:wrap; font-size:13px; color:var(--muted)}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important; transition-duration:.001ms!important}
+}
+</style>
+
+<div class="page">
+
+<nav class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top">
+      <span class="mark"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+      FocusGate
+    </a>
+    <div class="nav-links">
+      <a href="#how" data-i="nav.how"></a>
+      <a href="#features" data-i="nav.features"></a>
+      <a href="#limits" data-i="nav.limits"></a>
+      <a href="#faq" data-i="nav.faq"></a>
+    </div>
+    <span style="flex:1"></span>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" id="lang-vi" aria-pressed="true">VI</button>
+      <button type="button" id="lang-en" aria-pressed="false">EN</button>
+    </div>
+    <a class="btn btn-sm btn-primary" href="#download" data-i="nav.cta"></a>
+  </div>
+</nav>
+
+<header class="hero wrap" id="top">
+  <div class="pill">
+    <span class="tag" data-i="hero.tag"></span>
+    <span data-i="hero.pill"></span>
+  </div>
+  <h1><span data-i="hero.h1a"></span><br><span class="gtext" data-i="hero.h1b"></span></h1>
+  <p class="lead" data-i="hero.lead"></p>
+  <div class="hero-cta">
+    <a class="btn btn-primary" href="#download" data-i="hero.cta1"></a>
+    <a class="btn" href="#how" data-i="hero.cta2"></a>
+  </div>
+  <p class="hero-note" data-i="hero.note"></p>
+
+  <div class="demo">
+    <div class="browser" id="browser">
+      <div class="browser-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="omni">
+          <span class="lockicon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+          <span class="host">facebook.com</span>
+        </span>
+      </div>
+      <div class="screen">
+        <div class="glyph"><svg id="demoGlyph" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+        <h3 id="demoTitle"></h3>
+        <p class="sub" id="demoSub"></p>
+
+        <div class="demo-tasks" id="demoTasks">
+          <div class="dtask">
+            <button class="chk" type="button" role="checkbox" aria-checked="false" data-task="1">
+              <svg viewBox="0 0 16 16"><path d="M3 8.5 6.2 11.7 13 4.8"/></svg>
+            </button>
+            <span>
+              <span class="dt-title" data-i="demo.t1"></span>
+              <span class="dt-meta" style="display:block" data-i="demo.t1m"></span>
+            </span>
+          </div>
+          <div class="dtask">
+            <button class="chk" type="button" role="checkbox" aria-checked="false" data-task="2">
+              <svg viewBox="0 0 16 16"><path d="M3 8.5 6.2 11.7 13 4.8"/></svg>
+            </button>
+            <span>
+              <span class="dt-title" data-i="demo.t2"></span>
+              <span class="dt-meta" style="display:block" data-i="demo.t2m"></span>
+            </span>
+          </div>
+        </div>
+
+        <div class="demo-open">
+          <div class="feed-row"><span class="feed-av"></span><span style="flex:1"><span class="feed-l" style="width:42%"></span><span class="feed-l" style="width:64%; margin-top:7px"></span></span></div>
+          <div class="feed-row"><span class="feed-av"></span><span style="flex:1"><span class="feed-l" style="width:56%"></span><span class="feed-l" style="width:38%; margin-top:7px"></span></span></div>
+          <div class="feed-row" style="border-bottom:0"><span class="feed-av"></span><span style="flex:1"><span class="feed-l" style="width:34%"></span><span class="feed-l" style="width:52%; margin-top:7px"></span></span></div>
+          <button class="demo-reset" type="button" id="demoReset"></button>
+        </div>
+      </div>
+    </div>
+    <p class="demo-cap" data-i="demo.cap"></p>
+  </div>
+</header>
+
+<section class="wrap" id="problem" style="padding-block:44px">
+  <div class="strip">
+    <div><div class="n gtext">103</div><div class="l" data-i="strip.tests"></div></div>
+    <div><div class="n">0</div><div class="l" data-i="strip.server"></div></div>
+    <div><div class="n">0</div><div class="l" data-i="strip.account"></div></div>
+    <div><div class="n">100%</div><div class="l" data-i="strip.local"></div></div>
+  </div>
+</section>
+
+<section class="wrap" id="how">
+  <p class="eyebrow" data-i="how.eyebrow"></p>
+  <h2 style="margin:12px 0 14px" data-i="how.h2"></h2>
+  <p class="lead" data-i="how.lead"></p>
+  <div class="steps">
+    <div class="step">
+      <span class="idx">01</span>
+      <h3 data-i="how.s1t"></h3>
+      <p data-i="how.s1p"></p>
+    </div>
+    <div class="step">
+      <span class="idx">02</span>
+      <h3 data-i="how.s2t"></h3>
+      <p data-i="how.s2p"></p>
+    </div>
+    <div class="step">
+      <span class="idx">03</span>
+      <h3 data-i="how.s3t"></h3>
+      <p data-i="how.s3p"></p>
+    </div>
+  </div>
+
+  <div class="shots">
+    <figure>
+      <img src="shots/dash.webp" alt="" width="1100" height="1150" loading="lazy">
+      <figcaption><b data-i="shot.1b"></b> <span data-i="shot.1"></span></figcaption>
+    </figure>
+    <div style="display:flex; flex-direction:column; gap:14px">
+      <figure>
+        <img src="shots/desktop.webp" alt="" width="1100" height="820" loading="lazy">
+        <figcaption><b data-i="shot.2b"></b> <span data-i="shot.2"></span></figcaption>
+      </figure>
+      <figure>
+        <img src="shots/stats.webp" alt="" width="1100" height="820" loading="lazy">
+        <figcaption><b data-i="shot.3b"></b> <span data-i="shot.3"></span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="features">
+  <p class="eyebrow" data-i="feat.eyebrow"></p>
+  <h2 style="margin:12px 0 14px" data-i="feat.h2"></h2>
+  <p class="lead" data-i="feat.lead"></p>
+  <div class="feats">
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></span>
+      <h3 data-i="f1t"></h3><p data-i="f1p"></p>
+    </div>
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 8v4l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/></svg></span>
+      <h3 data-i="f2t"></h3><p data-i="f2p"></p>
+    </div>
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h10"/></svg></span>
+      <h3 data-i="f3t"></h3><p data-i="f3p"></p>
+    </div>
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M8 3v4M16 3v4M3 11h18"/></svg></span>
+      <h3 data-i="f4t"></h3><p data-i="f4p"></p>
+    </div>
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13H11l-1 9 8.5-11H12l1-9Z"/></svg></span>
+      <h3 data-i="f5t"></h3><p data-i="f5p"></p>
+    </div>
+    <div class="feat">
+      <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
+      <h3 data-i="f6t"></h3><p data-i="f6p"></p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="limits">
+  <p class="eyebrow" data-i="lim.eyebrow"></p>
+  <h2 style="margin:12px 0 14px" data-i="lim.h2"></h2>
+  <p class="lead" data-i="lim.lead"></p>
+  <div class="limits" id="limitRows"></div>
+  <p style="margin-top:18px; font-size:13.5px; color:var(--muted); max-width:68ch" data-i="lim.foot"></p>
+</section>
+
+<section class="wrap" id="faq">
+  <p class="eyebrow" data-i="faq.eyebrow"></p>
+  <h2 style="margin:12px 0 0" data-i="faq.h2"></h2>
+  <div class="faq" id="faqList"></div>
+</section>
+
+<section class="wrap" id="download">
+  <p class="eyebrow" data-i="dl.eyebrow"></p>
+  <h2 style="margin:12px 0 14px" data-i="dl.h2"></h2>
+  <p class="lead" data-i="dl.lead"></p>
+  <div class="dl">
+    <div class="dlcard">
+      <h3 data-i="dl.c1t"></h3>
+      <p class="plat" data-i="dl.c1p"></p>
+      <ol>
+        <li data-i="dl.c1s1"></li>
+        <li data-i="dl.c1s2"></li>
+        <li data-i="dl.c1s3"></li>
+      </ol>
+      <p style="font-size:13px; color:var(--muted)" data-i="dl.c1n"></p>
+    </div>
+    <div class="dlcard">
+      <h3 data-i="dl.c2t"></h3>
+      <p class="plat" data-i="dl.c2p"></p>
+      <ol>
+        <li data-i="dl.c2s1"></li>
+        <li data-i="dl.c2s2"></li>
+        <li data-i="dl.c2s3"></li>
+      </ol>
+      <p style="font-size:13px; color:var(--muted)" data-i="dl.c2n"></p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <span class="mark" style="width:22px;height:22px;border-radius:7px"><svg viewBox="0 0 24 24" style="width:11px;height:11px"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+    <span style="font-weight:600; color:var(--text-2)">FocusGate</span>
+    <span style="flex:1"></span>
+    <span data-i="foot.made"></span>
+    <span class="mono" style="font-size:12px">v1.0</span>
+  </div>
+</footer>
+
+</div>
+
+<script>
+const I18N = {
+  vi: {
+    'nav.how':'Cách hoạt động','nav.features':'Tính năng','nav.limits':'Giới hạn','nav.faq':'Hỏi đáp','nav.cta':'Tải về',
+    'hero.tag':'Chrome + macOS','hero.pill':'Extension trình duyệt & app desktop',
+    'hero.h1a':'Xong việc rồi','hero.h1b':'hẵng lướt.',
+    'hero.lead':'FocusGate khoá mọi trang gây mất tập trung cho tới khi bạn tick xong việc. Không phải một app nhắc nhở nữa — đây là cái cổng chặn thật, ở tầng mạng.',
+    'hero.cta1':'Tải FocusGate','hero.cta2':'Xem cách hoạt động',
+    'hero.note':'Miễn phí · Mã nguồn mở · Không tài khoản · Dữ liệu nằm trên máy bạn',
+    'demo.t1':'Làm bài tập Giải tích chương 3','demo.t1m':'Bắt buộc · hạn 21:00 hôm nay',
+    'demo.t2':'Ôn 30 từ vựng tiếng Anh','demo.t2m':'Bắt buộc · lặp hằng ngày',
+    'demo.cap':'Thử tick cả hai việc — đây đúng là màn hình bạn sẽ thấy.',
+    'demo.locked':'Còn {n} việc chưa xong','demo.lockedSub':'Tick xong việc bên dưới là cổng mở ngay. Không cần xin phép ai cả.',
+    'demo.open':'Xong hết rồi!','demo.openSub':'Cổng mở, và FocusGate đưa bạn về đúng trang vừa định mở.',
+    'demo.reset':'Chặn lại để thử lần nữa',
+    'strip.tests':'bài kiểm thử tự động','strip.server':'máy chủ','strip.account':'tài khoản cần tạo','strip.local':'dữ liệu ở máy bạn',
+    'how.eyebrow':'Cách hoạt động','how.h2':'Ba bước, không có bước thứ tư.',
+    'how.lead':'Không cấu hình rườm rà, không onboarding mười màn hình. Ghi việc, cổng khoá, tick xong là mở.',
+    'how.s1t':'Ghi việc cần làm','how.s1p':'Nhập việc, gắn luôn cụm tab bạn thật sự cần (Overleaf, LMS…), đặt hạn chót. Các tab đó luôn vào được kể cả khi khoá chặt.',
+    'how.s2t':'Cổng khoá lại','how.s2p':'Facebook, TikTok, YouTube, Shopee — mọi trang ngoài danh sách đều trả về màn hình chặn. Kể cả tab bạn đã mở sẵn cũng bị kéo về.',
+    'how.s3t':'Tick xong → cổng mở','how.s3p':'Ngay lập tức. Và FocusGate đưa bạn quay lại đúng trang bạn vừa định mở, không bắt bạn tìm lại.',
+    'shot.1b':'Bảng điều khiển.','shot.1':'Việc cần làm, hạn chót, tab công việc, chế độ chặn — tất cả trong một chỗ.',
+    'shot.2b':'Màn hình khoá macOS.','shot.2':'Bật máy là hiện ngay, và không cho Cmd+Q khi còn việc.',
+    'shot.3b':'Thống kê.','shot.3':'Phút tập trung mỗi ngày, chuỗi ngày liên tiếp, điểm tích luỹ.',
+    'feat.eyebrow':'Tính năng','feat.h2':'Đủ dùng, không thừa.',
+    'feat.lead':'Mỗi tính năng ở đây đều sinh ra từ một cách lách luật cụ thể của chính người dùng.',
+    'f1t':'Chặn ở tầng mạng','f1p':'Dùng declarativeNetRequest của Chrome — chặn trước khi trang kịp tải. Gõ thẳng URL, bấm link hay chuyển tab đều không lọt.',
+    'f2t':'Nhắc ngay khi bật máy','f2p':'App macOS chạy cùng hệ thống, hiện màn hình khoá toàn màn hình ngay khi bạn mở laptop — trước khi kịp mở tab đầu tiên.',
+    'f3t':'Lưu cả cụm tab công việc','f3p':'Gắn nhóm tab đang làm vào một việc. Một nút mở lại toàn bộ, và chúng luôn được phép vào.',
+    'f4t':'Khung giờ tập trung','f4p':'Đặt 19:00–22:00 mỗi tối: cổng tự khoá đúng giờ dù không có việc nào. Hỗ trợ cả khung qua nửa đêm.',
+    'f5t':'Pomodoro & chuỗi ngày','f5p':'25 phút tập trung, thống kê theo ngày, chuỗi ngày liên tiếp và điểm — mất sạch nếu bạn dùng lối thoát khẩn cấp.',
+    'f6t':'Chặn cả app ngoài trình duyệt','f6p':'Discord, Steam, Zalo… mở lên là bị ẩn đi và màn hình khoá bật lên. Danh sách do bạn tự chọn.',
+    'lim.eyebrow':'Nói thật','lim.h2':'Những gì FocusGate không làm được.',
+    'lim.lead':'Không phần mềm nào chạy trên máy bạn mà ngăn được chính bạn 100%. Đây là bảng đầy đủ, không giấu gì.',
+    'lim.foot':'Công cụ tạo ma sát đúng chỗ, còn quyết định vẫn là của bạn. Với phần lớn người dùng, ma sát đúng chỗ là đủ để đổi thói quen. Muốn chặt hơn, hướng dẫn có sẵn cách khoá cứng extension bằng chính sách hệ thống của Chrome.',
+    'faq.eyebrow':'Hỏi đáp','faq.h2':'Câu hỏi thường gặp',
+    'dl.eyebrow':'Tải về','dl.h2':'Cài trong hai phút.','dl.lead':'Chỉ cài extension thôi cũng dùng được ngay. App desktop là phần thêm cho ai muốn chặn cả ứng dụng.',
+    'dl.c1t':'Extension trình duyệt','dl.c1p':'Chrome · Edge · Brave · Cốc Cốc · Arc',
+    'dl.c1s1':'Giải nén gói FocusGate.zip vào một thư mục cố định.',
+    'dl.c1s2':'Mở chrome://extensions và bật Developer mode.',
+    'dl.c1s3':'Bấm Load unpacked, chọn thư mục extension.',
+    'dl.c1n':'Không cần cài gì thêm. Safari cần Xcode — có script chuyển sẵn trong gói.',
+    'dl.c2t':'App desktop','dl.c2p':'macOS · Apple Silicon',
+    'dl.c2s1':'Nháy đúp 0-Tao-app-desktop.command.',
+    'dl.c2s2':'Chờ script cài và đóng gói (lần đầu vài phút).',
+    'dl.c2s3':'App tự vào Applications và chạy ở thanh menu.',
+    'dl.c2n':'Cần Node.js. Script tự ký ứng dụng ngay trên máy bạn — không gửi gì đi đâu.',
+    'foot.made':'Làm tại Việt Nam · 2026'
+  },
+  en: {
+    'nav.how':'How it works','nav.features':'Features','nav.limits':'Limits','nav.faq':'FAQ','nav.cta':'Download',
+    'hero.tag':'Chrome + macOS','hero.pill':'Browser extension & desktop app',
+    'hero.h1a':'Finish first.','hero.h1b':'Scroll later.',
+    'hero.lead':'FocusGate blocks every distracting site until you check your tasks off. Not one more reminder app — a real gate, enforced at the network layer.',
+    'hero.cta1':'Download FocusGate','hero.cta2':'See how it works',
+    'hero.note':'Free · Open source · No account · Your data stays on your machine',
+    'demo.t1':'Finish Calculus problem set 3','demo.t1m':'Required · due 9:00 PM today',
+    'demo.t2':'Review 30 English vocabulary words','demo.t2m':'Required · repeats daily',
+    'demo.cap':'Try checking both off — this is the exact screen you get.',
+    'demo.locked':'{n} tasks still open','demo.lockedSub':'Check them off below and the gate opens. No permission needed from anyone.',
+    'demo.open':'All clear.','demo.openSub':'The gate is open, and FocusGate drops you back on the page you were heading to.',
+    'demo.reset':'Lock it again to retry',
+    'strip.tests':'automated tests','strip.server':'servers','strip.account':'accounts to create','strip.local':'data stays local',
+    'how.eyebrow':'How it works','how.h2':'Three steps. There is no fourth.',
+    'how.lead':'No sprawling settings, no ten-screen onboarding. Write the task, the gate closes, check it off and it opens.',
+    'how.s1t':'Write down what is due','how.s1p':'Add the task, attach the tabs you actually need (Overleaf, your LMS), set a deadline. Those tabs stay reachable even in strict mode.',
+    'how.s2t':'The gate closes','how.s2p':'Facebook, TikTok, YouTube, shopping — everything outside your list returns a wall. Tabs you already had open get pulled back too.',
+    'how.s3t':'Check it off, the gate opens','how.s3p':'Instantly. And FocusGate returns you to the exact page you were trying to reach, so you do not have to find it again.',
+    'shot.1b':'Dashboard.','shot.1':'Tasks, deadlines, work tabs, blocking mode — all in one place.',
+    'shot.2b':'macOS lock screen.','shot.2':'Appears the moment you boot, and refuses Cmd+Q while work is pending.',
+    'shot.3b':'Stats.','shot.3':'Focus minutes per day, day streak, accumulated points.',
+    'feat.eyebrow':'Features','feat.h2':'Enough. Nothing extra.',
+    'feat.lead':'Every feature here exists because of a specific way a real user tried to get around it.',
+    'f1t':'Network-level blocking','f1p':'Built on Chrome declarativeNetRequest — blocked before the page loads. Typing the URL, clicking a link or switching tabs all fail the same way.',
+    'f2t':'Reminds you the moment you boot','f2p':'The macOS app starts with the system and shows a full-screen lock the second you open your laptop — before the first tab exists.',
+    'f3t':'Save whole tab groups','f3p':'Attach the tabs you are working in to a task. One button reopens all of them, and they are always allowed through.',
+    'f4t':'Focus windows','f4p':'Set 7–10 PM every evening: the gate locks itself on schedule even with no tasks. Windows crossing midnight work too.',
+    'f5t':'Pomodoro & streaks','f5p':'25-minute sessions, daily stats, a day streak and points — all wiped if you take the emergency exit.',
+    'f6t':'Blocks apps too','f6p':'Discord, Steam, chat apps — open one and it gets hidden while the lock screen comes up. You pick the list.',
+    'lim.eyebrow':'Straight talk','lim.h2':'What FocusGate cannot do.',
+    'lim.lead':'No software running on your own machine can stop you completely. Here is the full table, nothing hidden.',
+    'lim.foot':'The tool creates friction in the right places; the decision is still yours. For most people, friction in the right place is enough to change the habit. If you want it tighter, the guide includes how to hard-lock the extension with a Chrome system policy.',
+    'faq.eyebrow':'FAQ','faq.h2':'Frequently asked',
+    'dl.eyebrow':'Download','dl.h2':'Installed in two minutes.','dl.lead':'The extension alone is already useful. The desktop app is the extra piece for blocking applications.',
+    'dl.c1t':'Browser extension','dl.c1p':'Chrome · Edge · Brave · Arc',
+    'dl.c1s1':'Unzip FocusGate.zip into a folder you will keep.',
+    'dl.c1s2':'Open chrome://extensions and turn on Developer mode.',
+    'dl.c1s3':'Click Load unpacked and pick the extension folder.',
+    'dl.c1n':'Nothing else to install. Safari needs Xcode — a conversion script ships in the bundle.',
+    'dl.c2t':'Desktop app','dl.c2p':'macOS · Apple Silicon',
+    'dl.c2s1':'Double-click 0-Tao-app-desktop.command.',
+    'dl.c2s2':'Let it install and package (a few minutes the first time).',
+    'dl.c2s3':'The app moves itself to Applications and lives in the menu bar.',
+    'dl.c2n':'Requires Node.js. The script signs the app on your own machine — nothing is uploaded.',
+    'foot.made':'Made in Vietnam · 2026'
+  }
+};
+
+const LIMITS = {
+  vi: [
+    ['Gõ thẳng URL, bấm link, chuyển tab', true, 'Bị chặn'],
+    ['Tab giải trí đang mở sẵn từ trước', true, 'Bị kéo về'],
+    ['Mở app trong danh sách chặn', true, 'Bị ẩn đi'],
+    ['Đóng cửa sổ khoá hoặc Cmd+Q', true, 'Bị chặn'],
+    ['Tắt extension ở chrome://extensions', false, 'Không ngăn được'],
+    ['Mở trình duyệt khác chưa cài extension', false, 'Không ngăn được'],
+    ['Force Quit app từ Activity Monitor', false, 'Không ngăn được'],
+    ['Cầm điện thoại lên lướt', false, 'Ngoài tầm với']
+  ],
+  en: [
+    ['Typing the URL, clicking a link, switching tabs', true, 'Blocked'],
+    ['Distracting tabs already open', true, 'Pulled back'],
+    ['Opening an app on the block list', true, 'Hidden'],
+    ['Closing the lock window or Cmd+Q', true, 'Refused'],
+    ['Disabling the extension in chrome://extensions', false, 'Cannot stop it'],
+    ['Using another browser without the extension', false, 'Cannot stop it'],
+    ['Force Quit from Activity Monitor', false, 'Cannot stop it'],
+    ['Picking up your phone instead', false, 'Out of reach']
+  ]
+};
+
+const FAQ = {
+  vi: [
+    ['FocusGate có miễn phí không?','Có. Miễn phí hoàn toàn, mã nguồn đi kèm trong gói tải về. Không có bản trả phí, không quảng cáo, không thu thập dữ liệu.'],
+    ['Dữ liệu của tôi đi đâu?','Không đi đâu cả. Extension lưu trong bộ nhớ cục bộ của trình duyệt, app desktop lưu một tệp JSON trong thư mục ứng dụng của bạn. Hai bên nói chuyện với nhau qua 127.0.0.1 — tức là chỉ trong máy bạn. Không có máy chủ nào để gửi dữ liệu tới.'],
+    ['Nếu tôi tự tắt extension thì sao?','Thì nó tắt. FocusGate không giả vờ ngăn được điều đó. Nhưng việc phải mở chrome://extensions, tìm đúng tiện ích và bấm tắt đã đủ chậm để bạn kịp nhận ra mình đang làm gì. Nếu muốn chặt hơn, hướng dẫn có sẵn cách dùng chính sách hệ thống của Chrome để vô hiệu hoá nút gỡ.'],
+    ['Có bản Windows hoặc Linux không?','Extension chạy trên mọi trình duyệt nhân Chromium, kể cả trên Windows và Linux. Riêng app desktop hiện mới có cho macOS — phần chặn ứng dụng dùng API riêng của macOS.'],
+    ['Safari thì sao?','Được, nhưng cần Xcode. Trong gói có sẵn script chuyển extension sang định dạng Safari bằng công cụ chính thức của Apple. Nếu bạn chỉ dùng Chrome thì bỏ qua bước này.'],
+    ['Lối thoát khẩn cấp có làm app thành vô dụng không?','Ngược lại. Một cái khoá không có lối ra sẽ bị gỡ bỏ ngay lần đầu bạn thực sự cần vào. Lối thoát ở đây có giá: chờ 30 giây, gõ tay nguyên câu cam kết dài, mất toàn bộ chuỗi ngày và 50 điểm, mỗi ngày tối đa hai lượt. Đủ để không bị lạm dụng, mà vẫn không khoá chết bạn.']
+  ],
+  en: [
+    ['Is FocusGate free?','Yes. Completely free, with the source included in the download. No paid tier, no ads, no data collection.'],
+    ['Where does my data go?','Nowhere. The extension stores everything in browser-local storage; the desktop app keeps a JSON file in your application support folder. The two talk to each other over 127.0.0.1 — inside your machine only. There is no server to send anything to.'],
+    ['What if I just disable the extension?','Then it is disabled. FocusGate does not pretend otherwise. But having to open chrome://extensions, find the right item and switch it off is slow enough that you notice what you are doing. If you want it tighter, the guide shows how to use a Chrome system policy that greys out the remove button.'],
+    ['Is there a Windows or Linux build?','The extension runs on any Chromium browser, Windows and Linux included. The desktop app is macOS-only for now — the app-blocking piece uses macOS-specific APIs.'],
+    ['What about Safari?','Supported, but it needs Xcode. The bundle ships a script that converts the extension using Apple official tool. If you only use Chrome, skip it.'],
+    ['Does the emergency exit defeat the point?','The opposite. A lock with no way out gets uninstalled the first time you genuinely need through. This exit has a price: a 30-second wait, typing a long commitment sentence by hand, losing your entire streak and 50 points, twice a day at most. Enough friction to stop casual use, without trapping you.']
+  ]
+};
+
+let lang = 'vi';
+try { const s = localStorage.getItem('fg-lang'); if (s === 'vi' || s === 'en') lang = s; } catch (e) {}
+
+let done = { 1: false, 2: false };
+
+function t(key) { return (I18N[lang] && I18N[lang][key]) || ''; }
+
+function renderLimits() {
+  const box = document.getElementById('limitRows');
+  box.replaceChildren(...LIMITS[lang].map(([label, ok, verdict]) => {
+    const row = document.createElement('div');
+    row.className = 'lrow';
+    const s = document.createElement('span');
+    s.textContent = label;
+    const v = document.createElement('span');
+    v.className = 'verdict ' + (ok ? 'yes' : 'no');
+    v.innerHTML = (ok
+      ? '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 6.2 11.7 13 4.8"/></svg>'
+      : '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>')
+      + '<span>' + verdict + '</span>';
+    row.append(s, v);
+    return row;
+  }));
+}
+
+function renderFaq() {
+  const box = document.getElementById('faqList');
+  box.replaceChildren(...FAQ[lang].map(([q, a], i) => {
+    const d = document.createElement('details');
+    if (i === 0) d.open = true;
+    const s = document.createElement('summary');
+    s.textContent = q;
+    const p = document.createElement('p');
+    p.textContent = a;
+    d.append(s, p);
+    return d;
+  }));
+}
+
+function renderDemo() {
+  const n = 2 - (done[1] ? 1 : 0) - (done[2] ? 1 : 0);
+  const open = n === 0;
+  document.getElementById('browser').classList.toggle('is-open', open);
+  document.getElementById('demoTitle').textContent = open ? t('demo.open') : t('demo.locked').replace('{n}', n);
+  document.getElementById('demoSub').textContent = open ? t('demo.openSub') : t('demo.lockedSub');
+  document.getElementById('demoGlyph').innerHTML = open
+    ? '<rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/>'
+    : '<rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>';
+  document.getElementById('demoReset').textContent = t('demo.reset');
+  document.querySelectorAll('.chk').forEach((b) => {
+    const id = b.dataset.task;
+    b.setAttribute('aria-checked', String(done[id]));
+    b.closest('.dtask').classList.toggle('done', done[id]);
+  });
+}
+
+function apply() {
+  document.querySelectorAll('[data-i]').forEach((el) => { el.textContent = t(el.dataset.i); });
+  document.getElementById('lang-vi').setAttribute('aria-pressed', String(lang === 'vi'));
+  document.getElementById('lang-en').setAttribute('aria-pressed', String(lang === 'en'));
+  document.documentElement.lang = lang;
+  renderLimits();
+  renderFaq();
+  renderDemo();
+}
+
+function setLang(next) {
+  lang = next;
+  try { localStorage.setItem('fg-lang', next); } catch (e) {}
+  apply();
+}
+
+document.getElementById('lang-vi').addEventListener('click', () => setLang('vi'));
+document.getElementById('lang-en').addEventListener('click', () => setLang('en'));
+document.querySelectorAll('.chk').forEach((b) => {
+  b.addEventListener('click', () => { done[b.dataset.task] = !done[b.dataset.task]; renderDemo(); });
+});
+document.getElementById('demoReset').addEventListener('click', () => { done = { 1: false, 2: false }; renderDemo(); });
+
+apply();
+</script>

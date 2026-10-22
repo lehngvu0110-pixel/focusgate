@@ -1,0 +1,48 @@
+{
+  "name": "focusgate",
+  "version": "1.0.0",
+  "description": "FocusGate: xong việc rồi hẵng lướt. Extension chặn web + app khoá màn hình macOS, chỉ mở khi bạn làm xong việc.",
+  "scripts": {
+    "test": "node --test packages/core/test/*.test.js packages/desktop/test/*.test.js",
+    "e2e": "node tests/e2e/run.mjs",
+    "build": "node scripts/build.mjs",
+    "e2e:desktop": "xvfb-run -a node tests/e2e/desktop.mjs",
+    "e2e:integration": "xvfb-run -a node tests/e2e/integration.mjs",
+    "test:all": "bash scripts/test-all.sh",
+    "package:mac": "node scripts/package-mac.mjs",
+    "e2e:setup": "npm i -D playwright",
+    "social": "node scripts/social.mjs",
+    "video:capture": "node video/capture.mjs",
+    "video:desktop": "node video/capture-desktop.mjs",
+    "video:assets": "node video/render-assets.mjs",
+    "video:build": "node video/build.mjs",
+    "video": "npm run video:capture && npm run video:escape && npm run video:desktop && npm run video:assets && npm run video:build",
+    "video:escape": "node video/capture-escape.mjs",
+    "video:audio": "python3 video/audio.py",
+    "video:tts": "python3 video/tts.py",
+    "video:vo": "node video/vo.mjs",
+    "video:mux": "node video/mux.mjs",
+    "video:tieng": "npm run video:audio && npm run video:mux",
+    "video:tiktok:setup": "bash video/tiktok/setup.sh",
+    "video:tiktok": "bash video/tiktok/run.sh"
+  },
+  "keywords": [
+    "focus",
+    "productivity",
+    "website-blocker",
+    "chrome-extension",
+    "electron",
+    "macos",
+    "pomodoro",
+    "vietnamese"
+  ],
+  "author": "Lê Hoàng Vũ",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "electron": "^44.4.0",
+    "playwright": "^1.64.1"
+  }
+}

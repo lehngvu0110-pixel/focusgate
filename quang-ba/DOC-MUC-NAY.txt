@@ -1,0 +1,26 @@
+BỘ ẢNH QUẢNG BÁ FOCUSGATE
+=========================
+
+Tất cả ảnh trong thư mục này xuất ở @2x (gấp đôi độ phân giải danh nghĩa),
+định dạng PNG, sẵn sàng đăng.
+
+  og-1200x630.png            Ảnh xem trước khi dán link (Facebook, LinkedIn, X, Zalo)
+  post-1080x1080.png         Bài đăng vuông Instagram / Facebook
+  story-1080x1920.png        Story · Reels cover
+  cover-1500x500.png         Ảnh bìa X / LinkedIn
+  carousel-1-van-de.png      Carousel 1/3 — vấn đề
+  carousel-2-cach-lam.png    Carousel 2/3 — cách làm
+  carousel-3-bang-chung.png  Carousel 3/3 — bằng chứng
+  mockup-trang-chan.png      Ảnh sản phẩm trong khung trình duyệt
+  mockup-bang-dieu-khien.png Bảng điều khiển trong khung trình duyệt
+  mockup-man-hinh-khoa.png   Màn hình khoá trong khung cửa sổ macOS
+
+MUỐN ĐỔI CHỮ TRÊN ẢNH?
+----------------------
+  1. Mở  social/card.html  (ở thư mục gốc của gói này), sửa chữ trực tiếp trong HTML.
+  2. Chạy:  npm run social
+  3. Ảnh mới ghi đè vào  dist/social/
+
+Chạy trên máy Mac sẽ ra chữ đẹp hơn (có sẵn SF Pro cho tiếng Việt).
+
+Quy tắc màu, chữ và cách dùng logo: xem  brand/BRAND.md

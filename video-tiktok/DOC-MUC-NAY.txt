@@ -1,0 +1,41 @@
+TÁM TỆP VIDEO — HAI GÓC × VIỆT/ANH × IM LẶNG/CÓ TIẾNG
+=====================================================
+
+  focusgate-tiktok-vi.mp4                        Demo sản phẩm · Việt · 58,7s · im lặng
+  focusgate-tiktok-en.mp4                        Demo sản phẩm · Anh  · 58,7s · im lặng
+  focusgate-tiktok-loi-thoat-vi.mp4              Lối thoát khẩn cấp · Việt · 59,4s · im lặng
+  focusgate-tiktok-loi-thoat-en.mp4              Lối thoát khẩn cấp · Anh  · 59,4s · im lặng
+
+  focusgate-tiktok-vi-co-tieng.mp4               …và bốn bản tương ứng có nhạc nền
+  focusgate-tiktok-en-co-tieng.mp4                  + hiệu ứng giao diện
+  focusgate-tiktok-loi-thoat-vi-co-tieng.mp4
+  focusgate-tiktok-loi-thoat-en-co-tieng.mp4
+
+CHỌN BẢN NÀO
+------------
+  TikTok              → bản im lặng, rồi ghép nhạc trending ngay trong app.
+                        Thuật toán ưu tiên video dùng nhạc có sẵn trên nền tảng.
+  Facebook · Shorts   → bản -co-tieng, đăng thẳng, không cần thêm gì.
+  Reels · landing page
+
+Bản -co-tieng chuẩn hoá -15 LUFS, đỉnh -1,8 dBFS. Toàn bộ tiếng được tổng hợp
+bằng công thức toán (numpy + ffmpeg), không dùng mẫu có sẵn nên không vướng
+bản quyền.
+
+MUỐN CÓ GIỌNG ĐỌC?
+------------------
+Nháy đúp  3-Long-tieng.command  ở thư mục gốc của gói.
+Sửa lời ở  video/vo-script.json  rồi chạy lại.
+
+Nếu bạn tải gói từ file nén: các tệp .mp4 không nằm trong FocusGate.zip vì vượt
+giới hạn 30 MB — tải riêng từ các tin nhắn trong cuộc trò chuyện.
+
+MUỐN DỰNG LẠI TOÀN BỘ VIDEO?
+----------------------------
+  npm install
+  npm run e2e:setup     # cài Playwright, chỉ cần một lần
+  npm run video         # quay lại footage và ghép 4 bản im lặng
+  npm run video:tieng   # dựng lại nhạc nền + hiệu ứng rồi ghép vào
+
+Kết quả ghi vào  dist/video/ .
+Chạy trên máy Mac sẽ ra chữ đẹp hơn (có sẵn SF Pro cho tiếng Việt).

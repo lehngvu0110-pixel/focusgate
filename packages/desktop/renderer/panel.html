@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+<title>FocusGate — Cài đặt</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { padding: 24px; }
+  body::before { filter: blur(44px); }
+  .topbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .logo { width: 32px; height: 32px; border-radius: 10px; }
+  .logo svg { width: 16px; height: 16px; }
+  .sec-title { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .sec-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  section { margin-top: 16px; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+    <div class="grow">
+      <div class="wordmark" style="font-size:16px">FocusGate</div>
+      <div class="tiny muted" id="status">Đang tải…</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="card card-pad">
+      <div class="sec-title"><h2>Ứng dụng bị chặn</h2></div>
+      <p class="small muted" style="margin:-4px 0 13px">Khi còn việc bắt buộc, mở các app này sẽ bị ẩn đi và màn hình khoá bật lên.</p>
+      <div class="row" style="margin-bottom:10px">
+        <input type="text" id="appInput" class="grow" placeholder="Tên app, VD: Discord">
+        <button class="btn btn-sm" id="appAdd">Thêm</button>
+        <button class="btn btn-sm btn-ghost" id="appScan" title="Lấy danh sách app đang chạy">Quét</button>
+      </div>
+      <div class="chips" id="appList"></div>
+      <div class="chips" id="appSuggest" style="margin-top:11px"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card card-pad">
+      <div class="sec-title"><h2>Khởi động</h2></div>
+      <label class="switch">
+        <input type="checkbox" id="login"><span class="track"></span>
+        <span class="small" style="color:var(--text)">Tự chạy khi đăng nhập macOS (ẩn ở thanh menu)</span>
+      </label>
+      <div class="tiny muted" style="margin-top:11px">Nhờ vậy màn hình nhắc việc hiện lên ngay khi bạn bật máy.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card card-pad">
+      <div class="sec-title"><h2>Đồng bộ với extension</h2></div>
+      <div class="small muted" id="syncInfo">Đang kiểm tra…</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="row">
+      <button class="btn" id="openLock">Mở màn hình việc cần làm</button>
+      <div class="spacer"></div>
+      <button class="btn btn-danger" id="quit">Thoát FocusGate</button>
+    </div>
+    <div class="tiny muted" id="quitHint" style="margin-top:9px"></div>
+  </section>
+<script src="panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>FocusGate</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { width: 368px; max-height: 580px; overflow-y: auto; }
+  body::before { height: 220px; }
+  .p { padding: 15px; }
+  .head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .logo-sm {
+    width: 29px; height: 29px; border-radius: 9px; flex: none;
+    display: grid; place-items: center; color: #fff; background: var(--grad);
+    box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset, 0 4px 16px -6px rgba(110,91,255,.9);
+  }
+  .logo-sm svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .head .name { font-size: 14px; font-weight: 640; letter-spacing: -.028em; }
+  .head .meta { font-family: var(--mono); font-size: 10.5px; color: var(--muted); letter-spacing: -.015em; }
+  .banner {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 13px;
+    border-radius: var(--r-sm); padding: 11px 13px;
+    border: 1px solid currentColor;
+  }
+  .banner .txt { font-size: 12.5px; font-weight: 560; letter-spacing: -.01em; }
+  .task { padding: 10px 12px; }
+  .task-title { font-size: 13px; }
+  .mini-timer { display: flex; align-items: center; gap: 12px; padding: 11px 13px; margin-bottom: 13px; }
+  .mini-timer .n {
+    font-family: var(--mono); font-size: 21px; font-weight: 600;
+    letter-spacing: -.05em; font-variant-numeric: tabular-nums;
+    background: var(--grad-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .foot-row { display: flex; gap: 7px; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="p">
+  <div class="head">
+    <div class="logo-sm"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+    <div class="grow">
+      <div class="name">FocusGate</div>
+      <div class="meta" id="streakLine"></div>
+    </div>
+    <button class="btn btn-sm btn-ghost" id="openDash" title="Mở bảng điều khiển" aria-label="Mở bảng điều khiển">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+    </button>
+  </div>
+
+  <div id="banner"></div>
+  <div id="miniTimer"></div>
+
+  <div class="row" style="margin-bottom:11px">
+    <input type="text" id="quick" class="grow" placeholder="Thêm nhanh một việc…" maxlength="200">
+    <button class="btn btn-sm btn-primary" id="add" aria-label="Thêm việc">+</button>
+  </div>
+
+  <div class="stack" id="list"></div>
+
+  <div class="foot-row">
+    <button class="btn btn-sm grow" id="focus25">Tập trung 25 phút</button>
+    <button class="btn btn-sm grow" id="saveTabs">Lưu tab đang mở</button>
+  </div>
+</div>
+<script type="module" src="popup.js"></script>
+</body>
+</html>

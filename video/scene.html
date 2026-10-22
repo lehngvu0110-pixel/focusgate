@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>FocusGate — video scene</title>
+<style>
+:root{
+  --bg:#08080C; --bg-2:#0B0B11; --surface:#101017; --surface-2:#16161F; --surface-3:#1E1E29;
+  --border:rgba(255,255,255,.09); --border-strong:rgba(255,255,255,.15);
+  --hairline:inset 0 1px 0 rgba(255,255,255,.06);
+  --text:#F2F2F6; --text-2:#A5A5B8; --muted:#6C6C80; --faint:#4A4A5C;
+  --accent:#6E5BFF; --accent-2:#22D3EE; --accent-text:#ADA0FF;
+  --accent-soft:rgba(110,91,255,.16); --accent-line:rgba(110,91,255,.38);
+  --grad:linear-gradient(135deg,#6E5BFF 0%,#7D6BFF 42%,#22D3EE 140%);
+  --grad-text:linear-gradient(100deg,#FFFFFF 6%,#C9C0FF 48%,#7FE6F5 96%);
+  --danger:#FF5A60; --danger-line:rgba(255,90,96,.34);
+  --success:#2DD4A7;
+  --sans:"Be Vietnam Pro","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"DejaVu Sans",sans-serif;
+  --mono:"JetBrains Mono","SF Mono",ui-monospace,"DejaVu Sans Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden}
+body{font-family:var(--sans);color:var(--text);letter-spacing:-.022em}
+body.opaque{background:var(--bg)}
+
+.aurora{position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(30% 20% at 10% 3%, rgba(110,91,255,.50) 0%, transparent 72%),
+    radial-gradient(26% 17% at 92% 7%, rgba(34,211,238,.28) 0%, transparent 70%),
+    radial-gradient(70% 18% at 50% 0%, rgba(110,91,255,.16) 0%, transparent 76%),
+    radial-gradient(40% 14% at 50% 100%, rgba(110,91,255,.14) 0%, transparent 74%);
+  filter:blur(42px)}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.3;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.07'/%3E%3C/svg%3E")}
+
+.mark{border-radius:22%;display:grid;place-items:center;background:var(--grad);color:#fff;flex:none;
+  box-shadow:0 0 0 1px rgba(255,255,255,.16) inset, 0 8px 28px -10px rgba(110,91,255,.95)}
+.mark svg{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.gtext{background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+/* ---------- Thanh thương hiệu trên đầu ---------- */
+.brandrow{position:absolute;top:56px;left:90px;display:flex;align-items:center;gap:16px}
+.brandrow .mark{width:42px;height:42px}
+.brandrow .mark svg{width:21px;height:21px;stroke-width:2.1}
+.brandrow .name{font-size:27px;font-weight:700;letter-spacing:-.035em}
+.brandrow .tag{font-size:18px;color:var(--muted);letter-spacing:.02em;margin-left:6px}
+
+/* ---------- Dải phụ đề ---------- */
+.cap{position:absolute;left:90px;right:90px;top:142px}
+.badge{display:inline-flex;align-items:center;gap:11px;padding:7px 18px;border-radius:999px;
+  background:var(--accent-soft);border:1px solid var(--accent-line);color:var(--accent-text);
+  font-size:19px;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
+.cap h2{font-size:50px;line-height:1.18;font-weight:800;letter-spacing:-.042em;margin-top:18px}
+.cap p{font-size:22.5px;line-height:1.45;color:var(--text-2);margin-top:12px;max-width:29ch}
+
+/* ---------- Thanh cửa sổ ---------- */
+.bar{position:absolute;left:90px;top:452px;width:900px;height:48px;border-radius:18px 18px 0 0;
+  background:var(--surface);border:1px solid var(--border-strong);border-bottom:0;
+  display:flex;align-items:center;gap:14px;padding:0 18px;box-shadow:var(--hairline)}
+.dots{display:flex;gap:7px}
+.dots i{width:11px;height:11px;border-radius:50%;background:var(--surface-3);display:block}
+.dots.mac i:nth-child(1){background:#FF5F57}.dots.mac i:nth-child(2){background:#FEBC2E}.dots.mac i:nth-child(3){background:#28C840}
+.omni{flex:1;display:flex;align-items:center;gap:10px;min-width:0;font-family:var(--mono);
+  font-size:16px;color:var(--text-2);padding:5px 15px;border-radius:999px;
+  background:var(--bg-2);border:1px solid var(--border)}
+.omni .li{flex:none;display:flex;color:var(--danger)}
+.omni .li.ok{color:var(--success)}
+.wt{flex:1;text-align:center;font-size:18px;font-weight:600;color:var(--text-2)}
+
+/* ---------- Viền cửa sổ hai bên (để video không bị hở) ---------- */
+.sideL,.sideR{position:absolute;top:500px;height:1120px;width:1px;background:var(--border-strong)}
+.sideL{left:90px}.sideR{left:989px}
+.baseline{position:absolute;left:90px;top:1620px;width:900px;height:1px;background:var(--border-strong)}
+
+/* ---------- Chấm tiến trình dưới đáy ---------- */
+.steps{position:absolute;left:90px;top:1676px;display:flex;gap:10px;align-items:center}
+.steps i{width:52px;height:5px;border-radius:99px;background:var(--surface-3);display:block}
+.steps i.on{background:var(--grad)}
+
+/* ---------- Thẻ toàn màn hình ---------- */
+.card{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+  padding:0 96px}
+.card .mark{width:92px;height:92px}
+.card .mark svg{width:46px;height:46px;stroke-width:2.1}
+.card h1{font-size:88px;line-height:1.14;font-weight:800;letter-spacing:-.05em;margin-top:44px}
+.card .sub{font-size:31px;color:var(--text-2);margin-top:28px;line-height:1.5;max-width:23ch}
+.card .kicker{font-size:23px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:34px}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:52px}
+.stat{padding:38px 34px;border-radius:26px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--hairline)}
+.stat .n{font-family:var(--mono);font-size:62px;font-weight:700;letter-spacing:-.06em;line-height:1.1}
+.stat .l{font-size:22px;color:var(--muted);margin-top:14px;line-height:1.35}
+
+.cta{display:inline-flex;align-items:center;gap:18px;padding:26px 52px;border-radius:999px;
+  background:var(--grad);color:#fff;font-size:34px;font-weight:700;letter-spacing:-.025em;margin-top:48px;
+  box-shadow:0 1px 0 rgba(255,255,255,.3) inset, 0 20px 56px -16px rgba(110,91,255,.95)}
+
+.anim{opacity:0}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const LOCK = '<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+const LOCK_SM = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+const OPEN_SM = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="4" y="10" width="16" height="11" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/></svg>';
+
+const brandRow = (tag) => `<div class="brandrow">
+  <span class="mark">${LOCK}</span><span class="name">FocusGate</span>
+  ${tag ? `<span class="tag">${tag}</span>` : ''}
+</div>`;
+
+const stepsBar = (n, total = 5) => `<div class="steps">${
+  Array.from({ length: total }, (_, k) => k + 1)
+    .map((i) => `<i class="${i <= n ? 'on' : ''}" style="width:${Math.round(280 / total) - 10}px"></i>`).join('')}</div>`;
+
+const chromeWeb = (text, ok) => `<div class="bar">
+  <span class="dots"><i></i><i></i><i></i></span>
+  <span class="omni"><span class="li ${ok ? 'ok' : ''}">${ok ? OPEN_SM : LOCK_SM}</span>${text}</span>
+</div>`;
+const chromeMac = (title) => `<div class="bar">
+  <span class="dots mac"><i></i><i></i><i></i></span><span class="wt">${title}</span><span style="width:70px"></span>
+</div>`;
+
+/* --------------- nội dung hai ngôn ngữ --------------- */
+const SCENES = {
+  demo: {
+  vi: [
+    { badge:'Bước 1', h:'Ghi việc cần làm', p:'Gắn luôn hạn chót và cụm tab bạn thật sự cần.',
+      chrome: chromeWeb('FocusGate — Bảng điều khiển', true), step:1, tag:'Extension Chrome' },
+    { badge:'Bước 2', h:'Mở Facebook →<br>bị chặn', p:'Chặn ở tầng mạng. Kể cả tab đang mở sẵn cũng bị kéo về.',
+      chrome: chromeWeb('facebook.com', false), step:2, tag:'Extension Chrome' },
+    { badge:'Bước 3', h:'Tick xong →<br>cổng mở', p:'Và đưa bạn về đúng trang vừa định mở.',
+      chrome: chromeWeb('facebook.com', true), step:3, tag:'Extension Chrome' },
+    { badge:'Tiện', h:'Tick ngay trên<br>thanh công cụ', p:'Không cần mở bảng điều khiển.',
+      chrome: chromeWeb('FocusGate', true), step:4, tag:'Extension Chrome' },
+    { badge:'App macOS', h:'Bật máy là<br>hiện ngay', p:'Chặn cả ứng dụng ngoài trình duyệt. Không cho tắt khi còn việc.',
+      chrome: chromeMac('FocusGate'), step:5, tag:'App desktop' }
+  ],
+  en: [
+    { badge:'Step 1', h:'Write down<br>what is due', p:'Attach the deadline and the tabs you actually need.',
+      chrome: chromeWeb('FocusGate — Dashboard', true), step:1, tag:'Chrome extension' },
+    { badge:'Step 2', h:'Open Facebook →<br>blocked', p:'Network-level. Tabs already open get pulled back too.',
+      chrome: chromeWeb('facebook.com', false), step:2, tag:'Chrome extension' },
+    { badge:'Step 3', h:'Check it off →<br>gate opens', p:'And it returns you to the page you were heading to.',
+      chrome: chromeWeb('facebook.com', true), step:3, tag:'Chrome extension' },
+    { badge:'Handy', h:'Tick it from<br>the toolbar', p:'No need to open the dashboard.',
+      chrome: chromeWeb('FocusGate', true), step:4, tag:'Chrome extension' },
+    { badge:'macOS app', h:'Shows up the<br>moment you boot', p:'Blocks apps outside the browser. Will not quit while work is pending.',
+      chrome: chromeMac('FocusGate'), step:5, tag:'Desktop app' }
+  ]
+  },
+
+  /* ---------- Chuyện thứ hai: lối thoát khẩn cấp ---------- */
+  escape: {
+  vi: [
+    { badge:'Cái giá', h:'Mở lối thoát<br>ra xem', p:'Mất chuỗi 12 ngày. Trừ 50 điểm. Chỉ còn 1 lượt hôm nay.',
+      chrome: chromeWeb('facebook.com', false), step:1, total:7, tag:'Lối thoát khẩn cấp' },
+    { badge:'Không dán được', h:'Dán? Không tính.', p:'Ô nhập chặn cả dán và kéo-thả. Chỉ gõ tay mới được.',
+      chrome: chromeWeb('facebook.com', false), step:2, total:7, tag:'Lối thoát khẩn cấp' },
+    { badge:'Gõ tay', h:'120 ký tự.<br>Từng chữ một.', p:'Gõ sai một chữ là nút vẫn khoá.',
+      chrome: chromeWeb('facebook.com', false), step:3, total:7, tag:'Lối thoát khẩn cấp' },
+    { badge:'Chờ 30 giây', h:'Và chờ đủ<br>30 giây', p:'Đủ lâu để cơn thèm đi qua. Đoạn này đã được tăng tốc.',
+      chrome: chromeWeb('facebook.com', false), step:4, total:7, tag:'Lối thoát khẩn cấp' },
+    { badge:'Trả giá', h:'Chuỗi 12 ngày → 0', p:'Trừ 50 điểm. Cổng mở 10 phút rồi khoá lại.',
+      chrome: chromeWeb('facebook.com', true), step:5, total:7, tag:'Lối thoát khẩn cấp' },
+    { badge:'Đổi ý', h:'Muốn quay lại?', p:'Một nút là khoá lại ngay. Không mất thêm gì.',
+      chrome: chromeWeb('facebook.com', false), step:6, total:7, tag:'Lối thoát khẩn cấp' },
+    { badge:'Cứng tuyệt đối', h:'Hoặc tắt hẳn<br>lối thoát', p:'Khi đó chỉ hoàn thành việc mới mở được cổng.',
+      chrome: chromeWeb('facebook.com', false), step:7, total:7, tag:'Lối thoát khẩn cấp' }
+  ],
+  en: [
+    { badge:'The price', h:'Open the<br>escape hatch', p:'Lose a 12-day streak. Minus 50 points. One try left today.',
+      chrome: chromeWeb('facebook.com', false), step:1, total:7, tag:'Emergency exit' },
+    { badge:'No pasting', h:'Paste? Does<br>not count.', p:'The box blocks paste and drop. Typing only.',
+      chrome: chromeWeb('facebook.com', false), step:2, total:7, tag:'Emergency exit' },
+    { badge:'By hand', h:'120 characters.<br>One at a time.', p:'One wrong letter and the button stays locked.',
+      chrome: chromeWeb('facebook.com', false), step:3, total:7, tag:'Emergency exit' },
+    { badge:'Wait 30 seconds', h:'And wait the<br>full 30 seconds', p:'Long enough for the urge to pass. This part is sped up.',
+      chrome: chromeWeb('facebook.com', false), step:4, total:7, tag:'Emergency exit' },
+    { badge:'Pay up', h:'12-day streak → 0', p:'Minus 50 points. The gate opens for 10 minutes, then locks.',
+      chrome: chromeWeb('facebook.com', true), step:5, total:7, tag:'Emergency exit' },
+    { badge:'Changed your mind', h:'Want to go back?', p:'One button locks it again. Costs you nothing extra.',
+      chrome: chromeWeb('facebook.com', false), step:6, total:7, tag:'Emergency exit' },
+    { badge:'Hard mode', h:'Or switch the<br>hatch off', p:'Then only finishing the work opens the gate.',
+      chrome: chromeWeb('facebook.com', false), step:7, total:7, tag:'Emergency exit' }
+  ]
+  }
+};
+
+const CARDS = {
+  demo: {
+  vi: {
+    title: { h:'Xong việc rồi<br><span class="gtext">hẵng lướt.</span>', sub:'Khoá mọi trang gây mất tập trung cho tới khi bạn tick xong việc.', kicker:'Extension Chrome + app macOS' },
+    stats: { h:'Không máy chủ.<br><span class="gtext">Không tài khoản.</span>',
+      cells:[['103','bài kiểm thử tự động'],['0','máy chủ'],['100%','dữ liệu trên máy bạn'],['2','phút để cài xong']] },
+    cta:  { h:'Miễn phí.<br><span class="gtext">Mã nguồn mở.</span>', cta:'Link ở phần giới thiệu' }
+  },
+  en: {
+    title: { h:'Finish first.<br><span class="gtext">Scroll later.</span>', sub:'Blocks every distracting site until you check your tasks off.', kicker:'Chrome extension + macOS app' },
+    stats: { h:'No servers.<br><span class="gtext">No accounts.</span>',
+      cells:[['103','automated tests'],['0','servers'],['100%','data stays local'],['2','minutes to set up']] },
+    cta:  { h:'Free.<br><span class="gtext">Open source.</span>', cta:'Link in bio' }
+  }
+  },
+
+  escape: {
+  vi: {
+    title: { h:'Muốn lướt sớm?<br>Được thôi.<br><span class="gtext">Nhưng có giá.</span>', sub:'FocusGate không khoá chết bạn. Nó bắt bạn trả giá.', kicker:'Lối thoát khẩn cấp' },
+    stats: { h:'Cái giá của<br><span class="gtext">một lần bỏ dở.</span>',
+      cells:[['30s','chờ trước khi mở'],['120','ký tự phải gõ tay'],['0','streak còn lại'],['2','lượt mỗi ngày']] },
+    cta:  { h:'Ma sát<br><span class="gtext">đúng chỗ.</span>', cta:'Link ở phần giới thiệu' }
+  },
+  en: {
+    title: { h:'Want to scroll?<br>Sure.<br><span class="gtext">At a price.</span>', sub:'FocusGate does not trap you. It makes you pay.', kicker:'The emergency exit' },
+    stats: { h:'The price of<br><span class="gtext">one shortcut.</span>',
+      cells:[['30s','wait before it opens'],['120','characters by hand'],['0','streak left'],['2','tries per day']] },
+    cta:  { h:'Friction<br><span class="gtext">in the right place.</span>', cta:'Link in bio' }
+  }
+  }
+};
+
+/* --------------- dựng DOM theo chế độ --------------- */
+const q = new URLSearchParams(location.search);
+const mode = q.get('mode') || 'overlay';
+const story = q.get('story') || 'demo';
+const lang = q.get('lang') || 'vi';
+const idx = Number(q.get('i') || 0);
+const root = document.getElementById('root');
+
+function build() {
+  if (mode === 'overlay') {
+    const s = SCENES[story][lang][idx];
+    root.innerHTML = brandRow(s.tag)
+      + `<div class="cap"><span class="badge">${s.badge}</span><h2>${s.h}</h2><p>${s.p}</p></div>`
+      + s.chrome
+      + '<div class="sideL"></div><div class="sideR"></div><div class="baseline"></div>'
+      + stepsBar(s.step, s.total || 5);
+    return;
+  }
+  document.body.classList.add('opaque');
+  const c = CARDS[story][lang];
+  if (mode === 'title') {
+    root.innerHTML = '<div class="aurora"></div><div class="grain"></div>'
+      + `<div class="card">
+           <span class="mark anim" data-t="-0.30">${LOCK}</span>
+           <h1 class="anim" data-t="-0.12">${c.title.h}</h1>
+           <p class="sub anim" data-t="0.22">${c.title.sub}</p>
+           <p class="kicker anim" data-t="0.44">${c.title.kicker}</p>
+         </div>`;
+  } else if (mode === 'stats') {
+    root.innerHTML = '<div class="aurora"></div><div class="grain"></div>'
+      + `<div class="card">
+           <h1 class="anim" data-t="0">${c.stats.h}</h1>
+           <div class="stats">${c.stats.cells.map((cell, i) =>
+             `<div class="stat anim" data-t="${0.22 + i * 0.12}"><div class="n${i === 0 ? ' gtext' : ''}">${cell[0]}</div><div class="l">${cell[1]}</div></div>`).join('')}</div>
+         </div>`;
+  } else {
+    root.innerHTML = '<div class="aurora"></div><div class="grain"></div>'
+      + `<div class="card" style="align-items:flex-start">
+           <span class="mark anim" data-t="0">${LOCK}</span>
+           <h1 class="anim" data-t="0.18">${c.cta.h}</h1>
+           <div class="cta anim" data-t="0.46">${c.cta.cta} <span style="font-size:30px">↗</span></div>
+           <p class="kicker anim" data-t="0.66">FocusGate · 2026</p>
+         </div>`;
+  }
+}
+build();
+
+/** Điều khiển hoạt ảnh theo thời gian tuyệt đối (0→1) để chụp từng khung xác định. */
+window.setProgress = (p) => {
+  for (const el of document.querySelectorAll('.anim')) {
+    const start = Number(el.dataset.t || 0);
+    const k = Math.max(0, Math.min(1, (p - start) / 0.30));
+    const e = 1 - Math.pow(1 - k, 3);                 // easeOutCubic
+    el.style.opacity = String(e);
+    el.style.transform = `translateY(${(1 - e) * 26}px)`;
+  }
+};
+window.setProgress(1);
+</script>
+</body>
+</html>

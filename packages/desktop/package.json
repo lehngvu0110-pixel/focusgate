@@ -1,0 +1,13 @@
+{
+  "name": "focusgate-desktop",
+  "productName": "FocusGate",
+  "version": "1.0.0",
+  "description": "Nhắc việc khi bật máy và khoá các thứ gây xao nhãng cho tới khi bạn làm xong.",
+  "private": true,
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "FG_SMOKE=1 electron ."
+  }
+}
