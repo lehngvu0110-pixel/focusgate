@@ -108,7 +108,8 @@ export function makeTask(input = {}, now = Date.now()) {
     repeat: input.repeat || 'none',     // none | daily | weekdays | weekly
     status: input.status === 'done' ? 'done' : 'pending',
     completedAt: input.completedAt ?? null,
-    focusSec: input.focusSec ?? 0
+    focusSec: input.focusSec ?? 0,
+    pointsAwarded: Number.isFinite(input.pointsAwarded) ? input.pointsAwarded : 0
   };
 }
 
@@ -159,27 +160,57 @@ export function blockingTasks(state, now = Date.now()) {
   });
 }
 
+const DAY_MS = 86400000;
+
+/** Số ngày lịch giữa hai mốc (theo giờ máy, không lệch vì đổi giờ mùa hè). */
+export function daysBetween(fromTs, toTs) {
+  const a = new Date(fromTs); a.setHours(12, 0, 0, 0);
+  const b = new Date(toTs); b.setHours(12, 0, 0, 0);
+  return Math.round((b - a) / DAY_MS);
+}
+
+/** Dời một mốc thời gian đi n ngày lịch, giữ nguyên giờ phút. */
+export function shiftDays(ts, n) {
+  if (!ts || !n) return ts;
+  const d = new Date(ts);
+  d.setDate(d.getDate() + n);
+  return d.getTime();
+}
+
 /**
  * Đặt lại các task lặp lại khi sang chu kỳ mới.
+ * Mốc nhắc/hạn chót được dời sang chu kỳ mới (giữ giờ phút), nếu không task vừa
+ * sống lại đã "quá hạn" từ hôm qua và khoá cổng oan.
  * Trả về state MỚI (không sửa tại chỗ) + số task đã reset.
  */
 export function rolloverRepeats(state, now = Date.now()) {
   const day = todayKey(new Date(now));
   if (state.lastRolloverDay === day) return { state, reset: 0 };
-  const d = new Date(now);
-  const dow = d.getDay();
+  const dow = new Date(now).getDay();
   let reset = 0;
   const tasks = (state.tasks || []).map((t) => {
     if (t.status !== 'done' || t.repeat === 'none' || !t.repeat) return t;
-    const doneDay = t.completedAt ? todayKey(new Date(t.completedAt)) : null;
-    if (doneDay === day) return t;                       // vừa xong hôm nay
+    const sinceDone = t.completedAt ? daysBetween(t.completedAt, now) : Infinity;
+    if (sinceDone <= 0) return t;                        // vừa xong hôm nay
     if (t.repeat === 'weekdays' && (dow === 0 || dow === 6)) return t;
-    if (t.repeat === 'weekly') {
-      const doneDow = t.completedAt ? new Date(t.completedAt).getDay() : -1;
-      if (doneDow !== dow) return t;
+    if (t.repeat === 'weekly' && sinceDone < 7) return t; // đủ một tuần mới sống lại (kể cả khi mở máy trễ)
+
+    // Dời mốc sang chu kỳ hiện tại: hằng tuần dời theo bội số 7 ngày để giữ đúng thứ.
+    const anchor = t.dueAt || t.remindAt;
+    let shift = 0;
+    if (anchor) {
+      const lag = daysBetween(anchor, now);
+      if (lag > 0) shift = t.repeat === 'weekly' ? Math.ceil(lag / 7) * 7 : lag;
     }
     reset++;
-    return { ...t, status: 'pending', completedAt: null, focusSec: 0 };
+    return {
+      ...t,
+      status: 'pending',
+      completedAt: null,
+      focusSec: 0,
+      remindAt: shiftDays(t.remindAt, shift),
+      dueAt: shiftDays(t.dueAt, shift)
+    };
   });
   return { state: { ...state, tasks, lastRolloverDay: day }, reset };
 }

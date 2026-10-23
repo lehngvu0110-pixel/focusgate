@@ -41,8 +41,14 @@ async function refresh() {
     + 'Extension FocusGate trên trình duyệt sẽ tự bắt tay và dùng chung danh sách việc.';
 }
 
+/** Hiện thông báo ngắn (ví dụ lý do bị từ chối khi cổng đang khoá). */
+function note(text) {
+  fill($('#appSuggest'), el('span', { class: 'small', role: 'status', style: 'color:var(--danger)' }, text));
+}
+
 async function setApps(list) {
-  await window.fg.call('updateSettings', { patch: { blockedApps: list } });
+  const r = await window.fg.call('updateSettings', { patch: { blockedApps: list } });
+  if (r && r.ok === false) note(r.error);
   refresh();
 }
 
@@ -66,10 +72,14 @@ $('#appScan').onclick = async () => {
 };
 
 $('#login').onchange = async (e) => {
-  await window.fg.call('updateSettings', { patch: { launchAtLogin: e.target.checked } });
+  const r = await window.fg.call('updateSettings', { patch: { launchAtLogin: e.target.checked } });
+  if (r && r.ok === false) note(r.error);
   refresh();
 };
-$('#openLock').onclick = () => window.fg.call('get').then(refresh);
+$('#openLock').onclick = async () => {
+  const r = await window.fg.call('showLock');
+  if (r && r.ok === false) note(r.error);
+};
 $('#quit').onclick = async () => {
   const r = await window.fg.call('quitApp');
   if (!r.ok) $('#quitHint').textContent = r.error;

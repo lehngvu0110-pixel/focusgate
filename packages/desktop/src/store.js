@@ -7,6 +7,8 @@ export class Store {
   constructor(file) {
     this.file = file;
     this.listeners = new Set();
+    this.emergencyArmedAt = null;
+    this.lastTick = null;
     this.state = this.#read();
   }
 
@@ -30,9 +32,19 @@ export class Store {
 
   get() { return this.state; }
 
-  /** Áp một phép biến đổi lên state rồi lưu + phát tín hiệu. */
-  update(fn, { bump = true } = {}) {
-    const next = fn(this.state) || this.state;
+  /**
+   * Áp một phép biến đổi lên state rồi lưu + phát tín hiệu.
+   *  - fn trả về đúng state cũ thì không ghi đĩa, không phát tín hiệu.
+   *  - guard: thao tác của người dùng không được nới lỏng cổng đang khoá (ném lỗi kèm lý do).
+   */
+  update(fn, { bump = true, guard = false } = {}) {
+    const prev = this.state;
+    const next = fn(prev) || prev;
+    if (next === prev) return prev;
+    if (guard) {
+      const why = FG.guardChange(prev, next);
+      if (why) throw new Error(why);
+    }
     this.state = bump ? { ...next, updatedAt: Date.now() } : next;
     this.#write();
     this.emit();
@@ -57,33 +69,45 @@ export class Store {
   addTask(input) { return this.update((s) => ({ ...s, tasks: [...s.tasks, FG.makeTask(input)] })); }
   completeTask(id) { return this.update((s) => FG.completeTask(s, id)); }
   uncompleteTask(id) { return this.update((s) => FG.uncompleteTask(s, id)); }
-  deleteTask(id) { return this.update((s) => ({ ...s, tasks: s.tasks.filter((t) => t.id !== id) })); }
-  updateSettings(patch) { return this.update((s) => ({ ...s, settings: { ...s.settings, ...patch } })); }
+  deleteTask(id, opts) { return this.update((s) => ({ ...s, tasks: s.tasks.filter((t) => t.id !== id) }), opts); }
+  updateSettings(patch, opts) { return this.update((s) => ({ ...s, settings: { ...s.settings, ...patch } }), opts); }
   cancelUnlock() { return this.update((s) => FG.cancelUnlock(s)); }
+
+  /** Mở hộp thoại thoát khẩn cấp: bắt đầu đếm ngược (kiểm lại khi xác nhận). */
+  emergencyInfo(now = Date.now()) {
+    const s = this.state;
+    const can = FG.canUseEmergency(s, now);
+    if (can.ok) this.emergencyArmedAt = now;
+    return {
+      ...can,
+      phrase: FG.pickPhrase(s, now),
+      cooldownSec: s.settings.emergency?.cooldownSec ?? 30,
+      unlockMinutes: s.settings.emergency?.unlockMinutes ?? 10
+    };
+  }
 
   emergency(typed, now = Date.now()) {
     const can = FG.canUseEmergency(this.state, now);
     if (!can.ok) return { ok: false, error: can.reason };
+    const left = FG.emergencyCooldownLeft(this.state, this.emergencyArmedAt, now);
+    if (left > 0) return { ok: false, error: `Còn phải chờ ${left} giây nữa.` };
     if (!FG.phraseMatches(typed, FG.pickPhrase(this.state, now))) {
       return { ok: false, error: 'Câu cam kết chưa đúng. Gõ lại chính xác từng chữ.' };
     }
     this.update((s) => FG.applyEmergency(s, now));
+    this.emergencyArmedAt = null;
     return { ok: true };
   }
 
-  /** Dọn dẹp theo thời gian: task lặp lại, hết cửa sổ mở tạm, hết phiên pomodoro. */
+  /**
+   * Dọn dẹp theo thời gian (dùng chung logic với extension): task lặp lại, hết cửa sổ mở tạm,
+   * hết phiên Pomodoro, tới giờ nhắc. Không có gì đổi thì không ghi đĩa.
+   * @returns {Array<{type:string}>} các sự kiện vừa xảy ra
+   */
   tick(now = Date.now()) {
-    const events = [];
-    this.update((s0) => {
-      let s = FG.rolloverRepeats(s0, now).state;
-      if (s.unlock && s.unlock.until <= now) { s = { ...s, unlock: null }; events.push('unlock-expired'); }
-      if (s.session && FG.isSessionOver(s.session, now)) {
-        if (s.session.phase === 'focus') s = FG.addFocusTime(s, Math.round(s.session.durationMs / 1000), s.session.taskId, now);
-        events.push('session-ended');
-        s = FG.stopSession(s);
-      }
-      return s;
-    }, { bump: events.length > 0 });
+    const { state, events } = FG.tickState(this.state, now, this.lastTick);
+    this.lastTick = now;
+    if (state !== this.state) this.update(() => state, { bump: events.length > 0 });
     return events;
   }
 }

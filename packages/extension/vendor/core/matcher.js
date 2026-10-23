@@ -68,9 +68,9 @@ export function matchesPattern(parsed, pattern) {
   const pathPrefix = slash === -1 ? null : p.slice(slash);
   if (!hostInDomain(parsed.host, domain)) return false;
   if (pathPrefix === null) return true;
+  // Khớp theo từng đoạn path: "linkedin.com/feed" không được khớp "/feedback"
   const path = parsed.path.replace(/\/+$/, '') || '/';
-  return path === pathPrefix || path.startsWith(pathPrefix + '/') ||
-         parsed.path.startsWith(pathPrefix);
+  return path === pathPrefix || path.startsWith(pathPrefix + '/');
 }
 
 /** Tìm pattern đầu tiên trong danh sách khớp URL. */

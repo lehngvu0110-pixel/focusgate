@@ -13,6 +13,7 @@ const APP = join(ROOT, 'packages/desktop');
 
 const results = [];
 function eq(a, b, m) { if (a !== b) throw new Error(`${m}\n   nhận: ${JSON.stringify(a)}\n   mong: ${JSON.stringify(b)}`); }
+function assert(c, m) { if (!c) throw new Error(m); }
 async function test(name, fn) {
   const t0 = Date.now();
   try { await fn(); results.push({ ok: true }); console.log(`  ✓ ${name}  ${Date.now() - t0}ms`); }
@@ -81,6 +82,21 @@ try {
     await p.goto('http://facebook.com/', { waitUntil: 'domcontentloaded' });
     await p.waitForURL(/blocked\.html/, { timeout: 10000 });
     await p.close();
+  });
+
+  await test('Tick xong trên desktop rồi thêm việc ngay trên extension → không mất lần tick', async () => {
+    await electronApp.evaluate(() => {
+      const st = globalThis.__FG_TEST__.store;
+      const t = st.get().tasks.find((x) => x.title === 'Việc tạo từ desktop');
+      return globalThis.__FG_TEST__.handlers.completeTask({ id: t.id });
+    });
+    // Không chờ vòng tick: thao tác ngay lập tức trên extension
+    await h.call('addTask', { title: 'Việc thêm liền sau', enforce: false });
+    const desk = new Store(stateFile).get();
+    eq(desk.tasks.find((t) => t.title === 'Việc tạo từ desktop')?.status, 'done', 'Desktop vẫn giữ trạng thái đã xong');
+    assert(desk.tasks.some((t) => t.title === 'Việc thêm liền sau'), 'Desktop nhận việc mới');
+    const ext = (await h.call('get')).state;
+    eq(ext.tasks.find((t) => t.title === 'Việc tạo từ desktop')?.status, 'done', 'Extension cũng thấy đã xong');
   });
 
   await test('Tắt đồng bộ thì hai bên chạy độc lập', async () => {

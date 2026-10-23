@@ -6,7 +6,11 @@ function attemptedUrl() {
   const i = q.indexOf('u=');
   if (i === -1) return null;
   let raw = q.slice(i + 2);
-  try { raw = decodeURIComponent(raw); } catch { /* giữ nguyên */ }
+  // Luật DNR chép nguyên URL (chưa mã hoá); tab bị kéo về thì URL đã qua encodeURIComponent.
+  // Chỉ giải mã trường hợp sau, tránh làm hỏng URL gốc có sẵn %2F, %20...
+  if (!/^https?:\/\//i.test(raw)) {
+    try { raw = decodeURIComponent(raw); } catch { /* giữ nguyên */ }
+  }
   return /^https?:\/\//i.test(raw) ? raw : null;
 }
 const TARGET = attemptedUrl();
@@ -216,7 +220,7 @@ async function renderEscape() {
       el('ul', {},
         el('li', {}, `Chuỗi ${s.streak} ngày tập trung liên tiếp → về 0`),
         el('li', {}, '50 điểm tích luỹ'),
-        el('li', {}, `Chỉ còn ${info.remaining - 1}/${info.remaining} lượt thoát cho hôm nay sau lần này`)),
+        el('li', {}, `Chỉ còn ${info.remaining - 1}/${info.max ?? info.remaining} lượt thoát cho hôm nay sau lần này`)),
       el('div', { class: 'small muted', style: 'margin-top:8px' }, `Đổi lại: cổng mở ${info.unlockMinutes} phút rồi khoá lại.`)),
     el('div', { class: 'phrase copyblock', id: 'phraseBox' }, info.phrase),
     typed, hint, confirm

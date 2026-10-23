@@ -48,12 +48,14 @@ app.on('ready', async () => {
     enforce('state-change');
   });
 
-  tickTimer = setInterval(() => { store.tick(); }, 20_000);
+  tickTimer = setInterval(onTick, 20_000);
   monitorTimer = setInterval(watchApps, 3000);
 
   try {
     powerMonitor.on('resume', () => showLock('resume'));
     powerMonitor.on('unlock-screen', () => showLock('unlock-screen'));
+    // Tắt máy / đăng xuất: không được chặn hệ điều hành (nếu không macOS báo "FocusGate đã huỷ tắt máy").
+    powerMonitor.on('shutdown', () => { quitting = true; app.quit(); });
   } catch (e) { console.error('[FocusGate] powerMonitor:', e.message); }
 
   updateTray();
@@ -78,6 +80,38 @@ app.on('ready', async () => {
 });
 
 app.on('window-all-closed', () => { /* giữ app sống ở thanh menu */ });
+
+/** Nhịp đồng hồ: cập nhật state theo thời gian, báo sự kiện, và áp lại cổng
+ *  (khung giờ bắt đầu/kết thúc làm cổng đổi mà state không hề đổi). */
+function onTick() {
+  if (!store) return;
+  let events = [];
+  try { events = store.tick(); } catch (e) { console.error('[FocusGate] tick:', e.message); }
+  for (const e of events) {
+    if (e.type === 'unlock-expired') notify('Hết giờ nghỉ', 'Cổng tập trung đã khoá lại. Quay lại với việc của bạn nhé.');
+    else if (e.type === 'focus-ended') notify('Hết một phiên tập trung', `${e.next === 'longBreak' ? 'Nghỉ dài' : 'Nghỉ ngắn'} ${e.minutes || 5} phút nào.`);
+    else if (e.type === 'reminder') notify('Tới giờ: ' + e.task.title, e.task.enforce ? 'Màn hình khoá đã bật.' : 'Nhắc nhẹ thôi nhé.');
+  }
+  updateTray();
+  enforce('tick');
+}
+
+/** Chỉ mở link web thật ra trình duyệt; mọi thứ khác (file:, javascript:...) bị bỏ qua. */
+function openSafeExternal(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol === 'https:' || u.protocol === 'http:') { shell.openExternal(u.href); return true; }
+  } catch { /* URL hỏng */ }
+  return false;
+}
+
+/** Cửa sổ chỉ hiển thị trang nội bộ, không bao giờ điều hướng ra ngoài. */
+function lockDown(win) {
+  win.webContents.setWindowOpenHandler(({ url }) => { openSafeExternal(url); return { action: 'deny' }; });
+  win.webContents.on('will-navigate', (e, url) => {
+    if (!url.startsWith('file://')) { e.preventDefault(); openSafeExternal(url); }
+  });
+}
 
 app.on('before-quit', (e) => {
   if (quitting) return;
@@ -110,7 +144,7 @@ function createLockWindow() {
       preload: join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
+      sandbox: true
     }
   });
   win.loadFile(join(__dirname, 'renderer/lock.html'));
@@ -120,7 +154,7 @@ function createLockWindow() {
     if (!quitting && store.gate().active) e.preventDefault();
   });
   win.on('closed', () => { lockWin = null; });
-  win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
+  lockDown(win);
   return win;
 }
 
@@ -155,8 +189,9 @@ function showPanel() {
   panelWin = new BrowserWindow({
     width: 560, height: 680, title: 'FocusGate — Cài đặt',
     backgroundColor: '#f6f7fb',
-    webPreferences: { preload: join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: false }
+    webPreferences: { preload: join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true }
   });
+  lockDown(panelWin);
   panelWin.loadFile(join(__dirname, 'renderer/panel.html'));
   panelWin.on('closed', () => { panelWin = null; });
 }
@@ -253,25 +288,31 @@ function broadcast() {
 
 const handlers = {
   get: () => payload(),
-  addTask: (p) => { store.addTask(p); return payload(); },
+  addTask: (p) => {
+    if (!String(p?.title || '').trim()) throw new Error('Việc cần có tên.');
+    store.addTask(p); return payload();
+  },
   completeTask: (p) => { store.completeTask(p.id); return payload(); },
   uncompleteTask: (p) => { store.uncompleteTask(p.id); return payload(); },
-  deleteTask: (p) => { store.deleteTask(p.id); return payload(); },
-  updateSettings: (p) => { store.updateSettings(p.patch); applyLoginItem(); return payload(); },
+  deleteTask: (p) => { store.deleteTask(p.id, { guard: true }); return payload(); },
+  updateSettings: (p) => { store.updateSettings(p.patch, { guard: true }); applyLoginItem(); return payload(); },
   cancelUnlock: () => { store.cancelUnlock(); return payload(); },
-  emergencyInfo: () => {
-    const s = store.get();
-    return { ...FG.canUseEmergency(s), phrase: FG.pickPhrase(s), cooldownSec: s.settings.emergency?.cooldownSec ?? 30, unlockMinutes: s.settings.emergency?.unlockMinutes ?? 10 };
-  },
+  emergencyInfo: () => store.emergencyInfo(),
   emergencyUnlock: (p) => {
     const r = store.emergency(p.typed);
     return r.ok ? { ok: true, ...payload() } : r;
   },
   startSession: (p) => { store.update((s) => FG.startSession(s, { taskId: p.taskId, phase: p.phase || 'focus' })); return payload(); },
-  stopSession: () => { store.update((s) => FG.stopSession(s)); return payload(); },
+  pauseSession: () => { store.update((s) => FG.pauseSession(s)); return payload(); },
+  resumeSession: () => { store.update((s) => FG.resumeSession(s)); return payload(); },
+  stopSession: () => { store.update((s) => FG.endSession(s)); return payload(); },
   listRunningApps: async () => ({ apps: await runningApps() }),
   openPanel: () => { showPanel(); return { ok: true }; },
-  openExternal: (p) => { shell.openExternal(p.url); return { ok: true }; },
+  showLock: () => {
+    if (!store.gate().active) return { ok: false, error: 'Không còn việc bắt buộc nào — cổng đang mở.' };
+    showLock('panel'); return { ok: true };
+  },
+  openExternal: (p) => ({ ok: openSafeExternal(p?.url) }),
   quitApp: () => {
     if (store.gate().active) return { ok: false, error: 'Còn việc chưa xong — chưa thoát được.' };
     quitting = true; app.quit(); return { ok: true };
@@ -286,7 +327,13 @@ if (IS_TEST) {
 ipcMain.handle('fg:call', async (_e, type, p = {}) => {
   const fn = handlers[type];
   if (!fn) throw new Error('Không có hành động: ' + type);
-  return await fn(p);
+  try {
+    return await fn(p);
+  } catch (e) {
+    // Lỗi có chủ đích (ví dụ người gác từ chối) trả về như dữ liệu để giao diện hiện đúng câu chữ,
+    // thay vì bị Electron bọc thành "Error invoking remote method…".
+    return { ok: false, error: String(e?.message || e) };
+  }
 });
 
 app.on('will-quit', () => {

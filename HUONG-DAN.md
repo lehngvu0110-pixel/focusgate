@@ -99,8 +99,10 @@ Cả hai danh sách sửa được thoải mái. Gõ `youtube.com` để chặn 
 Bấm **Tập trung** ở một việc để chạy 25 phút. Trong lúc phiên chạy, cổng khoá luôn. Phút tập trung được cộng vào biểu đồ ở tab **Thống kê**.
 
 ### Điểm và chuỗi ngày
-- Xong 1 việc: **+10 điểm**. Dọn sạch việc bắt buộc trong ngày: **+20**. Mỗi 5 phút tập trung: **+1**.
+- Xong 1 việc: **+10 điểm**. Dọn sạch việc bắt buộc trong ngày: **+20** (một lần mỗi ngày). Mỗi 5 phút tập trung: **+1**.
+- Bỏ tick một việc thì trả lại 10 điểm của nó, nên tick/bỏ tick liên tục không cày điểm được.
 - Ngày nào cũng dọn sạch việc → **chuỗi ngày** tăng. Bỏ một ngày là đứt.
+- Việc lặp lại (hằng ngày, thứ 2–6, hằng tuần) tự sống lại khi sang chu kỳ mới, và giờ nhắc/hạn chót được dời theo, nên sáng hôm sau không bị coi là "quá hạn".
 
 ---
 
@@ -118,6 +120,18 @@ Cái giá: **chuỗi ngày về 0, mất 50 điểm**, và mỗi ngày chỉ có
 Có nút **"Tôi quay lại làm việc"** để khoá lại sớm.
 
 Muốn khắt khe hơn nữa? Tab **Cài đặt** → tắt hẳn "Cho phép thoát khẩn cấp" = **chế độ cứng tuyệt đối**, chỉ hoàn thành việc mới mở được cổng.
+
+### Không có "cửa sau"
+Khi cổng đang khoá, FocusGate từ chối mọi thao tác nới lỏng chính nó, để lối thoát khẩn cấp thật sự là lối duy nhất:
+- xoá việc bắt buộc, tắt cờ "bắt buộc", dời giờ nhắc của việc đang khoá;
+- tắt hoặc xoá khung giờ tập trung đang chạy;
+- đổi sang chế độ danh sách đen, gỡ trang khỏi danh sách đen;
+- thêm trang giải trí (hoặc subdomain của nó) vào danh sách trắng hay vào tab công việc;
+- nới lối thoát khẩn cấp (thêm lượt, rút ngắn thời gian chờ, kéo dài thời gian mở tạm);
+- gỡ app khỏi danh sách chặn của app desktop, tắt tự khởi động;
+- xoá sạch dữ liệu hoặc nhập bản sao lưu.
+
+Thêm việc mới, sửa tên việc, thêm trang học tập vào danh sách trắng, siết chặt cài đặt thì vẫn làm bình thường. Đếm ngược 30 giây cũng được kiểm ở phía service worker và tiến trình chính của app, không chỉ ở giao diện.
 
 ---
 
@@ -204,10 +218,10 @@ focusgate/
 ```bash
 npm install
 npm run build          # đồng bộ core sang 2 gói + đóng gói extension
-npm test               # 58 unit test
-npm run e2e            # 31 bài trên Chromium thật
+npm test               # 88 unit test
+npm run e2e            # 34 bài trên Chromium thật
 npm run e2e:desktop    # 8 bài trên Electron thật
-npm run e2e:integration# 6 bài extension ⇄ desktop
+npm run e2e:integration# 7 bài extension ⇄ desktop
 npm run test:all       # chạy tất cả
 npm run social         # xuất lại bộ ảnh quảng bá
 ```

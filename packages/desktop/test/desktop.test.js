@@ -56,7 +56,11 @@ test('Store: thoát khẩn cấp cần đúng câu cam kết', async () => {
   s.update((st) => ({ ...st, stats: { ...st.stats, streak: 5, points: 100 } }));
   assert.equal(s.emergency('sai bét').ok, false);
   const { pickPhrase } = await import('../vendor/core/index.js');
-  const r = s.emergency(pickPhrase(s.get()));
+  const t0 = Date.now();
+  assert.equal(s.emergency(pickPhrase(s.get()), t0).ok, false, 'chưa mở hộp thoại → chưa đếm ngược');
+  s.emergencyInfo(t0);
+  assert.match(s.emergency(pickPhrase(s.get()), t0 + 5000).error, /chờ/, 'chưa hết 30 giây');
+  const r = s.emergency(pickPhrase(s.get()), t0 + 31000);
   assert.equal(r.ok, true);
   assert.equal(s.gate().active, false);
   assert.equal(s.get().stats.streak, 0);
@@ -70,7 +74,7 @@ test('Store.tick: hết cửa sổ mở tạm thì khoá lại', () => {
   s.update((st) => ({ ...st, unlock: { until: Date.now() - 1000 } }));
   assert.equal(s.gate().active, true, 'đã quá hạn mở tạm');
   const ev = s.tick();
-  assert.ok(ev.includes('unlock-expired'));
+  assert.ok(ev.some((e) => e.type === 'unlock-expired'));
   assert.equal(s.get().unlock, null);
   rmSync(d, { recursive: true, force: true });
 });
@@ -115,7 +119,7 @@ test('Máy chủ đồng bộ: dữ liệu rác bị từ chối gọn gàng', a
   const sync = createSyncServer(s, { port: 0 });
   const port = await sync.listen();
   const r1 = await fetch(`http://127.0.0.1:${port}/state`, { method: 'POST', body: '{{{' });
-  assert.equal(r1.status, 500);
+  assert.equal(r1.status, 400, 'JSON hỏng là lỗi của bên gửi');
   const r2 = await fetch(`http://127.0.0.1:${port}/state`, { method: 'POST', body: JSON.stringify({ nope: 1 }) });
   assert.equal(r2.status, 400);
   const r3 = await fetch(`http://127.0.0.1:${port}/khong-co`);
@@ -132,4 +136,61 @@ test('isAppBlocked: khớp không phân biệt hoa thường và khớp một ph
   assert.equal(isAppBlocked('Xcode', list), false);
   assert.equal(isAppBlocked('', list), false);
   assert.equal(isAppBlocked('Discord', []), false);
+});
+
+test('Store: không ghi đĩa khi không có gì đổi', () => {
+  const d = dir(); const f = join(d, 'state.json');
+  const s = new Store(f);
+  s.addTask({ title: 'A' });
+  const before = readFileSync(f, 'utf8');
+  let emitted = 0; s.onChange(() => emitted++);
+  s.tick(); s.tick();
+  assert.equal(readFileSync(f, 'utf8'), before);
+  assert.equal(emitted, 0);
+  rmSync(d, { recursive: true, force: true });
+});
+
+test('Store: người gác chặn xoá việc bắt buộc khi đang khoá', () => {
+  const d = dir(); const s = new Store(join(d, 'state.json'));
+  s.addTask({ title: 'Bài tập', enforce: true });
+  const id = s.get().tasks[0].id;
+  assert.throws(() => s.deleteTask(id, { guard: true }), /Bài tập/);
+  assert.throws(() => s.updateSettings({ mode: 'blocklist' }, { guard: true }), /Cổng đang khoá/);
+  assert.equal(s.get().tasks.length, 1);
+  s.completeTask(id);
+  s.deleteTask(id, { guard: true });
+  assert.equal(s.get().tasks.length, 0, 'làm xong rồi thì xoá thoải mái');
+  rmSync(d, { recursive: true, force: true });
+});
+
+test('Máy chủ đồng bộ: bản cũ hơn không ghi đè được thay đổi trên desktop', async () => {
+  const d = dir(); const s = new Store(join(d, 'state.json'));
+  s.addTask({ title: 'Việc A', enforce: true });
+  const stale = { ...s.get(), tasks: [], updatedAt: (s.get().updatedAt || 0) - 5000 };
+  const sync = createSyncServer(s, { port: 0 });
+  const port = await sync.listen();
+  const res = await fetch(`http://127.0.0.1:${port}/state`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ state: stale })
+  });
+  assert.equal(res.status, 409);
+  assert.equal((await res.json()).state.tasks.length, 1, 'trả về bản hiện tại để bên kia cập nhật');
+  assert.equal(s.get().tasks.length, 1);
+  await sync.close(); rmSync(d, { recursive: true, force: true });
+});
+
+test('Máy chủ đồng bộ: chặn DNS rebinding (Host lạ) và không cấp CORS cho trang web', async () => {
+  const d = dir(); const s = new Store(join(d, 'state.json'));
+  const sync = createSyncServer(s, { port: 0 });
+  const port = await sync.listen();
+  const http = await import('node:http');
+  const status = await new Promise((resolve) => {
+    http.get({ host: '127.0.0.1', port, path: '/state', headers: { Host: 'evil.example:' + port } }, (r) => { r.resume(); resolve(r.statusCode); });
+  });
+  assert.equal(status, 403, 'Host không phải localhost phải bị từ chối');
+  const pre = await fetch(`http://127.0.0.1:${port}/state`, { method: 'OPTIONS', headers: { Origin: 'https://evil.example' } });
+  assert.equal(pre.status, 403);
+  assert.equal(pre.headers.get('access-control-allow-origin'), null);
+  const ok = await fetch(`http://127.0.0.1:${port}/ping`, { headers: { Origin: 'chrome-extension://abcdef' } });
+  assert.equal(ok.headers.get('access-control-allow-origin'), 'chrome-extension://abcdef');
+  await sync.close(); rmSync(d, { recursive: true, force: true });
 });
