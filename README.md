@@ -15,8 +15,9 @@ Không máy chủ, không tài khoản. Mọi dữ liệu nằm trên máy bạn
 - **Ghi việc kèm hạn chót và cụm tab công việc.** Việc đánh dấu "bắt buộc" sẽ khoá cổng cho tới khi bạn tick xong.
 - **Chặn ở tầng mạng** bằng `declarativeNetRequest`: gõ thẳng địa chỉ, bấm link hay mở tab mới đều không lọt. Tab đang mở sẵn cũng bị kéo về trang chặn.
 - **Lối thoát khẩn cấp có giá.** Muốn lướt sớm thì phải chờ 30 giây, gõ tay câu cam kết 121 ký tự (dán không tính), mất chuỗi ngày, trừ 50 điểm, mỗi ngày tối đa 2 lượt. Ai muốn chặt hơn có thể tắt hẳn lối thoát.
+- **Không có cửa sau.** Khi đang khoá thì không xoá được việc bắt buộc, không tắt được khung giờ đang chạy, không đổi sang chế độ nhẹ, không thêm trang giải trí vào danh sách trắng, không xoá sạch dữ liệu.
 - **App desktop cho macOS** bật cùng máy, hiện màn hình khoá toàn màn hình khi còn việc, và ẩn các app bị chặn ngoài trình duyệt.
-- **Hai phần tự đồng bộ** qua `127.0.0.1:47823`. Máy chủ chỉ nhận yêu cầu từ extension, từ chối mọi trang web khác.
+- **Hai phần tự đồng bộ** qua `127.0.0.1:47823`. Máy chủ chỉ nhận yêu cầu từ extension, từ chối mọi trang web khác (kể cả kiểu tấn công DNS rebinding), và không để bản cũ ghi đè thay đổi mới.
 - Thêm: khung giờ khoá theo lịch, Pomodoro, điểm và chuỗi ngày, thống kê 14 ngày, giao diện tối/sáng.
 
 ## Cài đặt
@@ -50,9 +51,9 @@ video/                pipeline quay và dựng video giới thiệu (xem bên d�
 ```bash
 npm install
 npm run build          # đồng bộ core sang hai gói + đóng gói extension
-npm test               # 58 unit test
+npm test               # 88 unit test
 npm run e2e:setup      # cài Playwright (một lần)
-npm run test:all       # đủ 103 bài: unit, extension, desktop, tích hợp
+npm run test:all       # đủ 137 bài: unit, extension, desktop, tích hợp
 ```
 
 Kết quả chi tiết: [KIEM-THU.md](KIEM-THU.md). Kiểm thử E2E và desktop trên Linux cần `xvfb-run`.

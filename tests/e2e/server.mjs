@@ -4,6 +4,12 @@
  * chỉ là khung giữ chỗ để kiểm thử và quay demo.
  */
 import { createServer } from 'node:http';
+import { createServer as createTlsServer } from 'node:https';
+import { createServer as createNetServer } from 'node:net';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const PAGE = (host, url) => `<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <title>${host}</title><style>
@@ -51,11 +57,43 @@ const PAGE = (host, url) => `<!doctype html><html lang="vi"><head><meta charset=
   <script>window.__FAKE_SITE__ = ${JSON.stringify(host)};</script>
 </body></html>`;
 
+/** Chứng chỉ tự ký dùng tạm (Chromium chạy kèm --ignore-certificate-errors). */
+function selfSignedCert() {
+  const dir = mkdtempSync(join(tmpdir(), 'fg-cert-'));
+  try {
+    execFileSync('openssl', [
+      'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '2',
+      '-subj', '/CN=focusgate-test', '-keyout', join(dir, 'key.pem'), '-out', join(dir, 'cert.pem')
+    ], { stdio: 'ignore' });
+    return { key: readFileSync(join(dir, 'key.pem')), cert: readFileSync(join(dir, 'cert.pem')) };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Một cổng phục vụ cả HTTP lẫn HTTPS: Chromium có danh sách HSTS dựng sẵn nên
+ * http://facebook.com bị tự nâng lên https://. Byte đầu 0x16 là bắt tay TLS.
+ */
 export function startFakeWeb(port = 8899) {
-  const server = createServer((req, res) => {
+  const handler = (req, res) => {
     const host = (req.headers.host || 'unknown').split(':')[0];
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
     res.end(PAGE(host, req.url));
+  };
+  const http = createServer(handler);
+  let https = null;
+  try { https = createTlsServer(selfSignedCert(), handler); } catch { /* không có openssl: chỉ chạy HTTP */ }
+
+  const server = createNetServer((socket) => {
+    socket.once('data', (buf) => {
+      socket.pause();
+      socket.unshift(buf);
+      const target = buf[0] === 0x16 && https ? https : http;
+      target.emit('connection', socket);
+      process.nextTick(() => socket.resume());
+    });
+    socket.on('error', () => {});
   });
   return new Promise((resolve) => server.listen(port, '127.0.0.1', () => resolve(server)));
 }

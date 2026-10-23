@@ -351,7 +351,7 @@ async function main() {
   });
 
   await test('Dashboard: xoá việc cần xác nhận hai lần', async () => {
-    await addTask({ title: 'Việc sẽ xoá' });
+    await addTask({ title: 'Việc sẽ xoá', enforce: false });
     const p = await newPage();
     await p.goto(h.url('src/dashboard.html'), { waitUntil: 'domcontentloaded' });
     const del = p.locator('#pendingList .task').first().locator('button[title="Xoá việc"]');
@@ -386,8 +386,51 @@ async function main() {
     await p.close();
   });
 
+  await test('Dashboard: đang khoá thì không xoá được việc bắt buộc', async () => {
+    await addTask({ title: 'Việc không né được' });
+    const p = await newPage();
+    await p.goto(h.url('src/dashboard.html'), { waitUntil: 'domcontentloaded' });
+    const del = p.locator('#pendingList .task').first().locator('button[title="Xoá việc"]');
+    await del.click();
+    await del.click();
+    await until(async () => /chỉ được gỡ khi bạn làm xong/.test(await p.locator('.toast').textContent()), { label: 'thông báo từ chối' });
+    eq((await h.call('get')).state.tasks.length, 1, 'Việc bắt buộc phải còn nguyên');
+    eq((await gate()).active, true, 'Cổng vẫn khoá');
+    await p.close();
+  });
+
+  await test('Đang khoá: không đổi sang danh sách đen, không reset, không thêm facebook vào danh sách trắng', async () => {
+    await addTask({ title: 'Việc A' });
+    const s0 = (await h.call('get')).state.settings;
+    const tries = [
+      () => h.call('updateSettings', { patch: { mode: 'blocklist' } }),
+      () => h.call('updateSettings', { patch: { allowlist: [...s0.allowlist, 'facebook.com'] } }),
+      () => h.call('updateSettings', { patch: { emergency: { ...s0.emergency, maxPerDay: 9 } } }),
+      () => h.call('resetAll')
+    ];
+    for (const fn of tries) {
+      let err = null;
+      try { await fn(); } catch (e) { err = e; }
+      assert(err && /Cổng đang khoá/.test(err.message), 'Phải bị từ chối: ' + (err && err.message));
+    }
+    const st = (await h.call('get')).state;
+    eq(st.settings.mode, 'allowlist', 'Chế độ giữ nguyên');
+    eq(st.tasks.length, 1, 'Dữ liệu giữ nguyên');
+    // thêm trang học tập thì vẫn được
+    await h.call('updateSettings', { patch: { allowlist: [...s0.allowlist, 'vidu-hoctap.com'] } });
+  });
+
+  await test('Hết cửa sổ mở tạm là khoá lại ngay, không đợi vòng tick một phút', async () => {
+    await addTask({ title: 'Việc A' });
+    await h.setState({ unlock: { until: Date.now() + 2500, usedAt: Date.now() } });
+    await h.call('refresh');
+    const rules = () => h.sw.evaluate(() => chrome.declarativeNetRequest.getDynamicRules().then((r) => r.length));
+    eq(await rules(), 0, 'Đang mở tạm thì không có luật chặn');
+    await until(async () => (await rules()) > 0, { timeout: 15000, label: 'luật chặn quay lại' });
+  });
+
   await test('Xuất / nhập dữ liệu giữ nguyên việc và cài đặt', async () => {
-    await addTask({ title: 'Việc cần sao lưu' });
+    await addTask({ title: 'Việc cần sao lưu', enforce: false });
     const { json } = await h.call('exportState');
     await h.call('resetAll');
     eq((await h.call('get')).state.tasks.length, 0, 'Sau khi xoá phải trống');

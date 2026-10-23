@@ -126,16 +126,18 @@ function iconBtn(title, path, onclick) {
 /** Nút cần bấm hai lần để xác nhận (thay cho hộp thoại confirm gây treo trang). */
 function confirmBtn(title, path, onconfirm) {
   let armed = false; let timer;
+  const disarm = () => { armed = false; btn.classList.remove('btn-danger'); btn.classList.add('btn-ghost'); fill(btn, iconSpan(path)); };
   const btn = iconBtn(title, path, () => {
     if (!armed) {
       armed = true;
       btn.classList.add('btn-danger'); btn.classList.remove('btn-ghost');
       btn.textContent = 'Chắc chưa?';
-      timer = setTimeout(() => { armed = false; btn.classList.remove('btn-danger'); btn.classList.add('btn-ghost'); fill(btn, iconSpan(path)); }, 3000);
+      timer = setTimeout(disarm, 3000);
       return;
     }
     clearTimeout(timer);
-    onconfirm();
+    // bị từ chối (ví dụ việc bắt buộc khi cổng đang khoá) thì nút trở lại bình thường
+    return Promise.resolve(onconfirm()).finally(disarm);
   });
   return btn;
 }
@@ -480,9 +482,9 @@ $('#importFile').onchange = async (ev) => {
   const file = ev.target.files?.[0];
   if (!file) return;
   const json = await file.text();
+  ev.target.value = '';
   const r = await send('importState', { json });
   toast(r.ok ? 'Đã nhập dữ liệu' : r.error);
-  ev.target.value = '';
   await refresh();
 };
 
@@ -494,15 +496,20 @@ $('#resetBtn').onclick = async () => {
     setTimeout(() => { resetArmed = false; $('#resetBtn').textContent = 'Xoá sạch dữ liệu'; }, 4000);
     return;
   }
-  await send('resetAll');
-  resetArmed = false;
-  $('#resetBtn').textContent = 'Xoá sạch dữ liệu';
-  toast('Đã xoá sạch dữ liệu');
+  try {
+    await send('resetAll');
+    toast('Đã xoá sạch dữ liệu');
+  } finally {
+    resetArmed = false;
+    $('#resetBtn').textContent = 'Xoá sạch dữ liệu';
+  }
   await refresh();
 };
 
 /* ------------------------------------------------------------------ */
 onStateChanged(() => refresh());
+// Thao tác bị từ chối (đã có toast báo lý do): vẽ lại theo state thật để công tắc/ô chọn không "nói dối".
+window.addEventListener('unhandledrejection', () => { refresh().catch(() => {}); });
 setInterval(refresh, 30000);
 refresh().catch((e) => {
   document.body.prepend(el('div', { class: 'card card-pad', style: 'margin:20px' },

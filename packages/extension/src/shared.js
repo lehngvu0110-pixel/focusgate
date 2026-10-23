@@ -122,11 +122,20 @@ export function faviconFor(url, size = 32) {
 let toastTimer;
 export function toast(message) {
   let node = document.querySelector('.toast');
-  if (!node) { node = el('div', { class: 'toast' }); document.body.append(node); }
+  if (!node) { node = el('div', { class: 'toast', role: 'status', 'aria-live': 'polite' }); document.body.append(node); }
   node.textContent = message;
   requestAnimationFrame(() => node.classList.add('show'));
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => node.classList.remove('show'), 2600);
+  toastTimer = setTimeout(() => node.classList.remove('show'), Math.min(7000, 2600 + message.length * 30));
+}
+
+// Lỗi từ service worker (ví dụ người gác từ chối xoá việc khi đang khoá) hiện thành thông báo,
+// thay vì chìm trong console.
+if (typeof window !== 'undefined') {
+  window.addEventListener('unhandledrejection', (e) => {
+    const msg = e.reason && e.reason.message ? e.reason.message : String(e.reason || '');
+    if (msg) { toast(msg); e.preventDefault(); }
+  });
 }
 
 /** Áp chủ đề giao diện (mặc định: tối). */

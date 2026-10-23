@@ -25,20 +25,47 @@ async function saveState(state) {
   return state;
 }
 
-/** Đọc → biến đổi → ghi, tuần tự hoá để không mất dữ liệu khi gọi song song. */
-function mutate(fn, { bump = true } = {}) {
-  const next = writeChain.then(async () => {
-    const state = await loadState();
-    let out = (await fn(state)) || state;
-    if (bump) out = { ...out, updatedAt: Date.now() };
-    await saveState(out);
-    await applyState(out);
-    if (bump) pushToDesktop(out);
-    return out;
-  });
+/** Tuần tự hoá mọi thao tác đọc-ghi để không mất dữ liệu khi gọi song song. */
+function serial(job) {
+  const next = writeChain.then(job);
   writeChain = next.catch(() => {});
   return next;
 }
+
+/**
+ * Đọc → biến đổi → ghi.
+ *  - Kéo bản mới hơn từ app desktop về TRƯỚC khi sửa, để không ghi đè thay đổi bên đó.
+ *  - fn trả về đúng state cũ (không đổi gì) thì không ghi, không đẩy đi.
+ *  - guard: thao tác của người dùng phải qua "người gác" (không nới lỏng cổng đang khoá).
+ */
+function mutate(fn, { guard = false, force = false } = {}) {
+  return serial(async () => {
+    const state = (await pullFromDesktop()) || await loadState();
+    let out = (await fn(state)) || state;
+    if (guard) {
+      const why = FG.guardChange(state, out);
+      if (why) throw new Error(why);
+    }
+    const changed = force || out !== state;
+    if (changed) {
+      out = { ...out, updatedAt: Date.now() };
+      await saveState(out);
+    }
+    await applyState(out);
+    if (changed) pushToDesktop(out);
+    return out;
+  });
+}
+
+/* --- bộ nhớ phiên (sống qua lúc service worker bị tắt, mất khi tắt trình duyệt) --- */
+const session = {
+  async get(key) {
+    try { return (await chrome.storage.session.get(key))[key] ?? null; } catch { return null; }
+  },
+  async set(key, value) {
+    try { await chrome.storage.session.set({ [key]: value }); } catch { /* trình duyệt cũ */ }
+  }
+};
 
 /* ------------------------------------------------------------------ */
 /* Áp dụng trạng thái ra trình duyệt                                   */
@@ -100,7 +127,20 @@ async function applyState(state) {
   await syncRules(state);
   await updateBadge(state);
   await enforceTabs(state);
+  await scheduleWake(state);
   broadcast(state);
+}
+
+/**
+ * Hẹn báo thức đúng lúc trạng thái cổng có thể đổi (hết mở tạm, hết phiên, tới giờ nhắc,
+ * khung giờ bắt đầu/kết thúc) thay vì để cổng "hở" tới vòng tick một phút kế tiếp.
+ */
+async function scheduleWake(state) {
+  const at = FG.nextWakeAt(state);
+  try {
+    if (at) await chrome.alarms.create('fg-wake', { when: at + 500 });
+    else await chrome.alarms.clear('fg-wake');
+  } catch { /* không sao, vẫn còn vòng tick mỗi phút */ }
 }
 
 function broadcast(state) {
@@ -140,9 +180,9 @@ async function pushToDesktop(state) {
 
 /**
  * Bắt tay hai chiều: bên nào có updatedAt mới hơn thì bên đó thắng.
- * Trả về state mới nếu đã nhận dữ liệu từ desktop.
+ * Chỉ gọi BÊN TRONG serial(). Trả về state mới nếu đã nhận dữ liệu từ desktop.
  */
-async function syncWithDesktop() {
+async function pullFromDesktop() {
   const state = await loadState();
   if (state.settings?.syncEnabled === false) return null;
   let remote;
@@ -166,49 +206,39 @@ async function syncWithDesktop() {
   return null;
 }
 
+const syncWithDesktop = () => serial(pullFromDesktop);
+
 /* ------------------------------------------------------------------ */
 /* Đồng hồ: rollover, hết giờ pomodoro, hết cửa sổ mở tạm, nhắc việc   */
 /* ------------------------------------------------------------------ */
 
-async function tick() {
-  await syncWithDesktop();
+// Hai báo thức (mỗi phút + đúng mốc) có thể nổ cùng lúc: xếp hàng để mỗi lượt đọc đúng mốc lần trước.
+let tickQueue = Promise.resolve();
+function tick() {
+  const run = tickQueue.then(runTick);
+  tickQueue = run.catch(() => {});
+  return run;
+}
+
+async function runTick() {
+  const since = await session.get('fg.lastTick');
+  const now = Date.now();
+  let events = [];
   await mutate((state) => {
-    const now = Date.now();
-    let s = state;
-
-    // Task lặp lại sang ngày mới
-    const rolled = FG.rolloverRepeats(s, now);
-    s = rolled.state;
-
-    // Hết cửa sổ thoát khẩn cấp
-    if (s.unlock && s.unlock.until <= now) {
-      s = { ...s, unlock: null };
-      notify('Hết giờ nghỉ', 'Cổng tập trung đã khoá lại. Quay lại với việc của bạn nhé.');
-    }
-
-    // Phiên Pomodoro kết thúc
-    if (s.session && FG.isSessionOver(s.session, now)) {
-      const finished = s.session;
-      if (finished.phase === 'focus') {
-        s = FG.addFocusTime(s, Math.round(finished.durationMs / 1000), finished.taskId, now);
-        const np = FG.nextPhase(s);
-        notify('Hết một phiên tập trung 🎉', np === 'longBreak' ? 'Nghỉ dài nào!' : 'Nghỉ ngắn 5 phút.');
-        s = s.settings.pomodoro?.autoStartNext ? FG.startSession(s, { phase: np }, now) : FG.stopSession(s);
-      } else {
-        notify('Hết giờ nghỉ', 'Bắt đầu phiên tập trung tiếp theo thôi.');
-        s = s.settings.pomodoro?.autoStartNext ? FG.startSession(s, { phase: 'focus' }, now) : FG.stopSession(s);
-      }
-    }
-
-    // Việc vừa tới giờ nhắc
-    for (const t of s.tasks) {
-      if (t.status === 'done' || !t.remindAt) continue;
-      if (t.remindAt <= now && !t._notified && t.remindAt > now - 120000) {
-        notify('Tới giờ: ' + t.title, t.enforce ? 'Các trang giải trí vừa bị khoá.' : 'Nhắc nhẹ thôi nhé.');
-      }
-    }
-    return s;
+    const r = FG.tickState(state, now, since);
+    events = r.events;
+    return r.state;
   });
+  await session.set('fg.lastTick', now);
+  for (const e of events) {
+    if (e.type === 'unlock-expired') notify('Hết giờ nghỉ', 'Cổng tập trung đã khoá lại. Quay lại với việc của bạn nhé.');
+    else if (e.type === 'focus-ended') {
+      notify('Hết một phiên tập trung 🎉', `${e.next === 'longBreak' ? 'Nghỉ dài' : 'Nghỉ ngắn'} ${e.minutes || 5} phút nào.`);
+    } else if (e.type === 'break-ended') notify('Hết giờ nghỉ', 'Bắt đầu phiên tập trung tiếp theo thôi.');
+    else if (e.type === 'reminder') {
+      notify('Tới giờ: ' + e.task.title, e.task.enforce ? 'Các trang giải trí vừa bị khoá.' : 'Nhắc nhẹ thôi nhé.');
+    }
+  }
 }
 
 function notify(title, message) {
@@ -229,7 +259,7 @@ function notify(title, message) {
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   await chrome.alarms.create('fg-tick', { periodInMinutes: 1 });
-  await mutate((s) => s);
+  await mutate((s) => s, { force: true });
   if (details.reason === 'install') {
     chrome.tabs.create({ url: DASHBOARD + '?welcome=1' });
   }
@@ -246,12 +276,15 @@ chrome.runtime.onStartup.addListener(async () => {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'fg-tick') tick();
+  if (alarm.name === 'fg-tick' || alarm.name === 'fg-wake') {
+    tick().catch((e) => console.error('[FocusGate] tick', e));
+  }
 });
 
-// Lớp chặn dự phòng: bắt điều hướng kiểu SPA mà DNR bỏ sót
-chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
-  const url = info.url || tab?.url;
+// Lớp chặn dự phòng: bắt điều hướng kiểu SPA mà DNR bỏ sót.
+// Chỉ xét khi URL đổi (bỏ qua hàng loạt sự kiện đổi tiêu đề, favicon, trạng thái tải).
+chrome.tabs.onUpdated.addListener(async (tabId, info) => {
+  const url = info.url;
   if (!url || !/^https?:/i.test(url)) return;
   const state = await loadState();
   const res = FG.checkUrl(state, url);
@@ -287,6 +320,7 @@ const actions = {
   },
 
   async addTask(payload) {
+    if (!String(payload?.title || '').trim()) throw new Error('Việc cần có tên.');
     const s = await mutate((st) => ({ ...st, tasks: [...st.tasks, FG.makeTask(payload)] }));
     return snapshot(s);
   },
@@ -295,12 +329,12 @@ const actions = {
     const s = await mutate((st) => ({
       ...st,
       tasks: st.tasks.map((t) => (t.id === id ? FG.makeTask({ ...t, ...patch }) : t))
-    }));
+    }), { guard: true });
     return snapshot(s);
   },
 
   async deleteTask({ id }) {
-    const s = await mutate((st) => ({ ...st, tasks: st.tasks.filter((t) => t.id !== id) }));
+    const s = await mutate((st) => ({ ...st, tasks: st.tasks.filter((t) => t.id !== id) }), { guard: true });
     return snapshot(s);
   },
 
@@ -315,7 +349,7 @@ const actions = {
   },
 
   async updateSettings({ patch }) {
-    const s = await mutate((st) => ({ ...st, settings: { ...st.settings, ...patch } }));
+    const s = await mutate((st) => ({ ...st, settings: { ...st.settings, ...patch } }), { guard: true });
     return snapshot(s);
   },
 
@@ -326,20 +360,16 @@ const actions = {
   async pauseSession() { return snapshot(await mutate((st) => FG.pauseSession(st))); },
   async resumeSession() { return snapshot(await mutate((st) => FG.resumeSession(st))); },
   async stopSession() {
-    return snapshot(await mutate((st) => {
-      let s = st;
-      if (st.session && st.session.phase === 'focus') {
-        const elapsed = Math.round(((st.session.elapsedBeforePause || 0) + (st.session.paused ? 0 : Date.now() - st.session.startedAt)) / 1000);
-        if (elapsed > 30) s = FG.addFocusTime(s, elapsed, st.session.taskId);
-      }
-      return FG.stopSession(s);
-    }));
+    return snapshot(await mutate((st) => FG.endSession(st)));
   },
 
+  /** Mở hộp thoại thoát khẩn cấp: bắt đầu đếm ngược (được kiểm lại khi xác nhận). */
   async emergencyInfo() {
     const state = await loadState();
+    const can = FG.canUseEmergency(state);
+    if (can.ok) await session.set('fg.emergencyArmedAt', Date.now());
     return {
-      ...FG.canUseEmergency(state),
+      ...can,
       phrase: FG.pickPhrase(state),
       cooldownSec: state.settings.emergency?.cooldownSec ?? 30,
       unlockMinutes: state.settings.emergency?.unlockMinutes ?? 10
@@ -350,10 +380,13 @@ const actions = {
     const state = await loadState();
     const can = FG.canUseEmergency(state);
     if (!can.ok) return { ok: false, error: can.reason };
+    const left = FG.emergencyCooldownLeft(state, await session.get('fg.emergencyArmedAt'));
+    if (left > 0) return { ok: false, error: `Còn phải chờ ${left} giây nữa.` };
     if (!FG.phraseMatches(typed, FG.pickPhrase(state))) {
       return { ok: false, error: 'Câu cam kết chưa đúng. Gõ lại chính xác từng chữ.' };
     }
     const s = await mutate((st) => FG.applyEmergency(st));
+    await session.set('fg.emergencyArmedAt', null);
     return { ok: true, snapshot: snapshot(s) };
   },
 
@@ -369,7 +402,7 @@ const actions = {
     const s = await mutate((st) => ({
       ...st,
       tasks: st.tasks.map((t) => (t.id === taskId ? { ...t, tabs: dedupeTabs([...(t.tabs || []), ...picked]) } : t))
-    }));
+    }), { guard: true });
     return { tabs: picked, snapshot: snapshot(s) };
   },
 
@@ -406,8 +439,7 @@ const actions = {
   },
 
   async resetAll() {
-    await chrome.storage.local.remove(KEY);
-    const s = await mutate((st) => st);
+    const s = await mutate(() => FG.defaultState(), { guard: true, force: true });
     return snapshot(s);
   },
 
@@ -416,7 +448,10 @@ const actions = {
   async importState({ json }) {
     let parsed;
     try { parsed = JSON.parse(json); } catch { return { ok: false, error: 'Tệp JSON không hợp lệ.' }; }
-    const s = await mutate(() => FG.hydrate(parsed));
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return { ok: false, error: 'Tệp không phải bản sao lưu FocusGate.' };
+    }
+    const s = await mutate(() => FG.hydrate(parsed), { guard: true, force: true });
     return { ok: true, snapshot: snapshot(s) };
   }
 };

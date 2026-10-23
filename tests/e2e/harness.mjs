@@ -23,6 +23,8 @@ export async function launch(opts = {}) {
       `--host-resolver-rules=MAP * 127.0.0.1:${PORT}, EXCLUDE localhost, EXCLUDE 127.0.0.1`,
       '--no-first-run',
       '--no-default-browser-check',
+      '--no-proxy-server',
+      '--ignore-certificate-errors',
       '--disable-features=DialMediaRouteProvider'
     ]
   });

@@ -2,24 +2,40 @@
  * FocusGate Desktop — máy chủ đồng bộ nội bộ.
  * Chỉ lắng nghe 127.0.0.1 và chỉ nhận yêu cầu từ extension (hoặc không có Origin),
  * nên trang web bình thường không chọc vào được.
+ *
+ * Thêm hai lớp phòng thủ:
+ *  - Kiểm tra Host: chặn tấn công DNS rebinding (trang evil.com trỏ tên miền về 127.0.0.1;
+ *    khi đó trình duyệt coi là cùng nguồn và GET không gửi Origin).
+ *  - POST chỉ thắng khi mới hơn (updatedAt): bản cũ bị trả 409 kèm state hiện tại,
+ *    để không ghi đè thay đổi vừa làm trên màn hình khoá.
  */
 import { createServer } from 'node:http';
 
 const MAX_BODY = 2 * 1024 * 1024;
+const EXTENSION_ORIGIN = /^(chrome-extension|moz-extension|safari-web-extension):\/\/[^/]+$/;
+
+/** Host hợp lệ: 127.0.0.1 / localhost / [::1], cổng nào cũng được. */
+export function isLocalHost(host) {
+  if (!host) return true;                       // HTTP/1.0 hoặc công cụ dòng lệnh
+  const name = host.replace(/:\d+$/, '').toLowerCase();
+  return name === '127.0.0.1' || name === 'localhost' || name === '[::1]';
+}
 
 export function createSyncServer(store, { port = 47823, host = '127.0.0.1' } = {}) {
   const server = createServer(async (req, res) => {
     const origin = req.headers.origin;
-    const allowed = !origin || /^chrome-extension:\/\//.test(origin) || /^moz-extension:\/\//.test(origin)
-      || /^safari-web-extension:\/\//.test(origin);
+    const allowed = !origin || EXTENSION_ORIGIN.test(origin);
 
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.setHeader('Cache-Control', 'no-store');
-
-    if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
+    if (!isLocalHost(req.headers.host)) return json(res, 403, { error: 'Sai địa chỉ máy chủ.' });
     if (!allowed) return json(res, 403, { error: 'Chỉ extension mới được kết nối.' });
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    }
+    if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
 
     const url = new URL(req.url, 'http://localhost');
     try {
@@ -30,8 +46,16 @@ export function createSyncServer(store, { port = 47823, host = '127.0.0.1' } = {
         return json(res, 200, { ok: true, app: 'focusgate-desktop', updatedAt: store.get().updatedAt || 0 });
       }
       if (req.method === 'POST' && url.pathname === '/state') {
-        const body = await readBody(req);
-        if (!body || typeof body !== 'object' || !body.state) return json(res, 400, { error: 'Thiếu state' });
+        let body;
+        try { body = await readBody(req); } catch (e) { return json(res, e.status || 400, { error: e.message }); }
+        if (!body || typeof body !== 'object' || !body.state || typeof body.state !== 'object') {
+          return json(res, 400, { error: 'Thiếu state' });
+        }
+        const incomingAt = Number(body.state.updatedAt) || 0;
+        const currentAt = store.get().updatedAt || 0;
+        if (incomingAt <= currentAt) {
+          return json(res, 409, { ok: false, error: 'Dữ liệu cũ hơn bản trên desktop', state: store.get() });
+        }
         store.replace(body.state);
         return json(res, 200, { ok: true, state: store.get() });
       }
@@ -63,7 +87,7 @@ function readBody(req) {
     const chunks = [];
     req.on('data', (c) => {
       size += c.length;
-      if (size > MAX_BODY) { reject(new Error('Dữ liệu quá lớn')); req.destroy(); return; }
+      if (size > MAX_BODY) { reject(Object.assign(new Error('Dữ liệu quá lớn'), { status: 413 })); req.destroy(); return; }
       chunks.push(c);
     });
     req.on('end', () => {

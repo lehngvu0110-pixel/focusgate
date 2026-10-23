@@ -128,7 +128,7 @@ async function renderEscape() {
       el('div', { class: 'strong', style: 'color:var(--danger)' }, 'Bấm nút này bạn sẽ mất:'),
       el('ul', {}, el('li', {}, `Chuỗi ${snap.summary.streak} ngày tập trung liên tiếp → về 0`),
         el('li', {}, '50 điểm tích luỹ'),
-        el('li', {}, `Chỉ còn ${info.remaining - 1}/${info.remaining} lượt thoát cho hôm nay`)),
+        el('li', {}, `Chỉ còn ${info.remaining - 1}/${info.max ?? info.remaining} lượt thoát cho hôm nay`)),
       el('div', { class: 'small muted', style: 'margin-top:8px' }, `Đổi lại: cổng mở ${info.unlockMinutes} phút rồi khoá lại.`)),
     el('div', { class: 'phrase', id: 'phraseBox' }, info.phrase),
     typed,

@@ -91,7 +91,17 @@ export function canUseEmergency(state, now = Date.now()) {
   if (used >= max) {
     return { ok: false, reason: `Hôm nay bạn đã dùng hết ${max} lượt thoát khẩn cấp.`, remaining: 0 };
   }
-  return { ok: true, reason: '', remaining: max - used };
+  return { ok: true, reason: '', remaining: max - used, max };
+}
+
+/**
+ * Đếm ngược của lối thoát phải được kiểm ở phía xử lý, không chỉ ở giao diện.
+ * @param {number|null} armedAt  lúc người dùng mở hộp thoại thoát khẩn cấp (ms)
+ */
+export function emergencyCooldownLeft(state, armedAt, now = Date.now()) {
+  const sec = state?.settings?.emergency?.cooldownSec ?? 30;
+  if (!Number.isFinite(armedAt)) return sec;
+  return Math.max(0, Math.ceil((armedAt + sec * 1000 - now) / 1000));
 }
 
 /** Chọn câu cam kết theo ngày + số lượt đã dùng (ổn định trong cùng một lượt). */
@@ -167,30 +177,48 @@ export function completeTask(state, taskId, now = Date.now()) {
   days[key] = { ...days[key], completed: days[key].completed + 1 };
 
   let points = (state.stats.points || 0) + POINTS_PER_TASK;
+  tasks[idx].pointsAwarded = POINTS_PER_TASK;
   const stillBlocking = blockingTasks({ ...state, tasks }, now);
   let streak = state.stats.streak || 0;
   let bestStreak = state.stats.bestStreak || 0;
   let lastSuccessDay = state.stats.lastSuccessDay || null;
 
-  if (stillBlocking.length === 0 && days[key].emergencies === 0) {
+  // Thưởng "dọn sạch" và streak chỉ tính một lần mỗi ngày (tick/bỏ tick không cày điểm được)
+  if (stillBlocking.length === 0 && days[key].emergencies === 0 && lastSuccessDay !== key) {
     points += POINTS_CLEAR_ALL;
-    if (lastSuccessDay !== key) {
-      const y = todayKey(new Date(now - 86400000));
-      streak = lastSuccessDay === y ? streak + 1 : 1;
-      lastSuccessDay = key;
-      bestStreak = Math.max(bestStreak, streak);
-    }
+    const y = todayKey(new Date(now - 86400000));
+    streak = lastSuccessDay === y ? streak + 1 : 1;
+    lastSuccessDay = key;
+    bestStreak = Math.max(bestStreak, streak);
   }
 
   return { ...state, tasks, stats: { ...state.stats, days, points, streak, bestStreak, lastSuccessDay } };
 }
 
+/** Bỏ tick: trả lại điểm và số việc xong của ngày đã tick. */
 export function uncompleteTask(state, taskId) {
   const idx = (state.tasks || []).findIndex((t) => t.id === taskId);
   if (idx === -1 || state.tasks[idx].status !== 'done') return state;
+  const task = state.tasks[idx];
   const tasks = [...state.tasks];
-  tasks[idx] = { ...tasks[idx], status: 'pending', completedAt: null };
-  return { ...state, tasks };
+  tasks[idx] = { ...task, status: 'pending', completedAt: null, pointsAwarded: 0 };
+
+  const stats = { ...(state.stats || {}) };
+  stats.points = Math.max(0, (stats.points || 0) - (task.pointsAwarded || 0));
+  const key = task.completedAt ? todayKey(new Date(task.completedAt)) : null;
+  if (key && stats.days?.[key]) {
+    stats.days = { ...stats.days, [key]: { ...stats.days[key], completed: Math.max(0, (stats.days[key].completed || 0) - 1) } };
+  }
+  return { ...state, tasks, stats };
+}
+
+/** Chuỗi ngày còn hiệu lực: đứt nếu hôm qua và hôm nay đều chưa "dọn sạch". */
+export function currentStreak(stats, now = Date.now()) {
+  const last = stats?.lastSuccessDay;
+  if (!last) return 0;
+  const today = todayKey(new Date(now));
+  const yesterday = todayKey(new Date(now - 86400000));
+  return last === today || last === yesterday ? (stats.streak || 0) : 0;
 }
 
 /** Cộng thời gian tập trung (giây) vào thống kê + task. */
@@ -224,7 +252,7 @@ export function summary(state, now = Date.now()) {
     pending: pending.length,
     overdue: pending.filter((t) => isOverdue(t, now)).length,
     blocking: blockingTasks(state, now).length,
-    streak: state.stats?.streak || 0,
+    streak: currentStreak(state.stats, now),
     bestStreak: state.stats?.bestStreak || 0,
     points: state.stats?.points || 0
   };
